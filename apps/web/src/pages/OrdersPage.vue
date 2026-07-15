@@ -343,8 +343,9 @@ async function loadOrders(options = {}) {
   const hadAccountSnapshot = accountsAvailable.value === true
   const keepSelectedId = options.keepSelectedId ?? selected.value?.id
   const sync = options.sync
-  clearNotice()
-  ordersLoading.value = true
+  const silent = options.silent === true
+  if (!silent) clearNotice()
+  if (!silent) ordersLoading.value = true
   const requestConfig = listRefreshRequestConfig(hadSnapshot)
   try {
     const [accountResult, orderResult] = await Promise.allSettled([
@@ -593,14 +594,44 @@ function onHeaderAction(event) {
   if (event.detail === 'orders-refresh') loadOrders()
 }
 
+let ordersPollTimer = null
+let ordersPollVisible = true
+
+function startOrdersPolling() {
+  if (ordersPollTimer) return
+  ordersPollTimer = setInterval(() => {
+    if (!ordersPollVisible || document.hidden) return
+    if (ordersLoading.value || syncingList.value) return
+    loadOrders({ sync: false, silent: true })
+  }, 30000)
+}
+
+function stopOrdersPolling() {
+  if (ordersPollTimer) {
+    clearInterval(ordersPollTimer)
+    ordersPollTimer = null
+  }
+}
+
+function onVisibilityChange() {
+  ordersPollVisible = !document.hidden
+  if (ordersPollVisible) {
+    loadOrders({ sync: false, silent: true })
+  }
+}
+
 onMounted(() => {
   window.addEventListener('xya-header-action', onHeaderAction)
+  document.addEventListener('visibilitychange', onVisibilityChange)
   loadOrders()
+  startOrdersPolling()
 })
 
 onBeforeUnmount(() => {
   ordersRequestGuard.invalidate()
   window.removeEventListener('xya-header-action', onHeaderAction)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+  stopOrdersPolling()
 })
 </script>
 

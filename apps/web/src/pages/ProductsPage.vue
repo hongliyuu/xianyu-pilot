@@ -158,12 +158,11 @@
             </template>
             <template #type="{row}">
               <button v-if="row.type === '未配置'" class="delivery-type-configurable" type="button" @click.stop="goToAutoDelivery(row)">
-                <Badge type="orange">未配置</Badge>
+                <Badge type="orange">暂未配置</Badge>
                 <span class="config-hint">去配置</span>
               </button>
               <Badge v-else :type="row.type==='卡密'?'purple':row.type==='自定义'?'blue':'green'">{{ row.type }}</Badge>
             </template>
-            <template #delivery="{row}"><div class="cell-center"><ToggleSwitch :on="row.deliveryOn" @click.stop="toggleDelivery(row)" /></div></template>
             <template #reply="{row}"><div class="cell-center"><ToggleSwitch :on="row.replyOn" @click.stop="toggleReply(row)" /></div></template>
             <template #onsale="{row}"><div class="cell-center"><AppButton v-if="row.isLocalDraft" type="primary" :disabled="listAvailable !== true" @click.stop="publishDraft(row)">发布</AppButton><ToggleSwitch v-else :on="row.statusCode===0" @click.stop="toggleOnShelf(row)" /></div></template>
             <template #op="{row}">
@@ -369,7 +368,6 @@ import { getAccounts } from '../api/accounts.js'
 import { useItemPolish } from '../composables/useItemPolish.js'
 import ItemPolishConflictCard from '../components/ItemPolishConflictCard.vue'
 import ItemPolishUnknownReconcile from '../components/ItemPolishUnknownReconcile.vue'
-import { getGoodsDeliveryConfig, saveGoodsDeliveryConfig } from '../api/autoDelivery.js'
 import { getBusinessSettings } from '../api/businessSettings.js'
 import { updateProductAutoReplyScope } from '../api/autoReplyScope.js'
 import { deleteGoodsLocal, getGoodsDetail, getGoods, getGoodsStats, updateGoods } from '../api/goods.js'
@@ -471,7 +469,7 @@ const selectedProductPolishReconcileMessage = computed(() => {
 })
 // 每页条数可选项，默认 50
 const pageSizes = [50, 100, 200, 300, 500, 1000]
-const cols=[{key:'info',title:'商品信息'},{key:'price',title:'价格'},{key:'stock',title:'库存'},{key:'sku',title:'SKU'},{key:'status',title:'状态'},{key:'type',title:'发货类型'},{key:'delivery',title:'自动发货'},{key:'reply',title:'自动回复'},{key:'onsale',title:'在售'},{key:'time',title:'更新时间'},{key:'op',title:'操作'}]
+const cols=[{key:'info',title:'商品信息'},{key:'price',title:'价格'},{key:'stock',title:'库存'},{key:'sku',title:'SKU'},{key:'status',title:'状态'},{key:'type',title:'发货类型'},{key:'reply',title:'自动回复'},{key:'onsale',title:'在售'},{key:'time',title:'更新时间'},{key:'op',title:'操作'}]
 const syncCols=[{key:'createdTime',title:'创建时间'},{key:'status',title:'状态'},{key:'progress',title:'进度'},{key:'summary',title:'统计'},{key:'durationSeconds',title:'耗时(s)'},{key:'error',title:'错误'}]
 let syncPollCanceled = false
 const statusMap = { 0: '在售', 1: '下架/草稿', 2: '已售出', 3: '已删除' }
@@ -488,7 +486,6 @@ const autoSyncState = reactive({
   accountLabel: '',
   failedAccounts: []
 })
-const DELIVERY_TIMINGS = ['payDelivery', 'confirmDelivery', 'reviewDelivery']
 const AUTO_DELIVERY_FOCUS_GOODS_KEY = 'xya:auto-delivery-focus-goods-id'
 const EXTERNAL_OPERATION_INTENTS_KEY = 'xya:product-external-operation-intents'
 const publishDraftIntents = reactive({})
@@ -1119,73 +1116,6 @@ async function refreshSingle(row) {
   const ok = await confirmAction({ title:'确认同步该账号全部商品？', description:'当前版本会同步该账号的全部闲鱼商品，不是仅刷新单个商品。同步期间请避免重复点击。' })
   if (!ok) return
   return withItemBusy(row, async () => { try { await refreshItems({ xianyuAccountId: accountId }); showNotice('info', '账号商品同步已提交'); await loadItems(); loadGoodsStats() } catch(e){ showNotice('error', e.message || '刷新失败') } })
-}
-function configuredDeliveryTimings(config = {}) {
-  return DELIVERY_TIMINGS.filter(timing => {
-    const timingConfig = config?.[timing]
-    return timingConfig && typeof timingConfig === 'object' && Object.keys(timingConfig).length > 0
-  })
-}
-
-function enabledDeliveryTimings(config = {}) {
-  return configuredDeliveryTimings(config).filter(timing => {
-    const enabled = config?.[timing]?.enabled
-    return !['0', 'false', 'off', 'no'].includes(String(enabled ?? 1).trim().toLowerCase())
-  })
-}
-
-async function toggleDelivery(row) {
-  if (!ensureListAvailable('切换自动发货')) return
-  if (isOffShelfBlockingOtherWrites(row)) return showNotice('warn', '下架流程尚未安全收尾，已阻止修改自动发货配置。')
-  if (typeof isItemBusy === 'function' && isItemBusy(row)) return
-  const goodsId = row.raw?.id ?? row.id
-  if (!goodsId) return showNotice('warn', '缺少商品ID，无法切换自动发货')
-
-  return withItemBusy(row, async () => {
-    try {
-      const res = await getGoodsDeliveryConfig(goodsId)
-      const config = res?.data || {}
-      const configuredTimings = configuredDeliveryTimings(config)
-      const activeTimings = enabledDeliveryTimings(config)
-      const currentlyEnabled = row.deliveryOn || activeTimings.length > 0
-
-      if (currentlyEnabled) {
-        const targets = activeTimings.length ? activeTimings : configuredTimings
-        if (!targets.length) {
-          showNotice('warn', '当前商品还没有可关闭的自动发货配置，请先到“自动发货”模块检查配置')
-          return
-        }
-        for (const timing of targets) {
-          await saveGoodsDeliveryConfig(goodsId, { timing, enabled: 0 })
-        }
-        showNotice('success', `已关闭商品“${row.name}”的自动发货`)
-        await loadItems()
-        loadGoodsStats()
-        return
-      }
-
-      if (!configuredTimings.length) {
-        const ok = await confirmAction({
-          title: `商品“${row.name}”尚未配置自动发货`,
-          description: '开启前需要先配置发货内容或卡密来源。现在前往“自动发货”页面，并定位到当前商品进行配置。',
-          confirmText: '前往配置'
-        })
-        if (!ok) return
-        sessionStorage.setItem(AUTO_DELIVERY_FOCUS_GOODS_KEY, String(goodsId))
-        emit('navigate', 'auto-delivery')
-        return
-      }
-
-      for (const timing of configuredTimings) {
-        await saveGoodsDeliveryConfig(goodsId, { timing, enabled: 1 })
-      }
-      showNotice('success', `已开启商品“${row.name}”的自动发货`)
-      await loadItems()
-      loadGoodsStats()
-    } catch (e) {
-      showNotice('error', e.message || '切换自动发货失败')
-    }
-  })
 }
 async function toggleReply(row) {
   if (!ensureListAvailable('切换自动回复')) return

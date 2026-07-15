@@ -59,7 +59,7 @@ const deliveryItems = computed(() => [{label:'成功', value:String(stats.value.
 const replyItems = computed(() => [{label:'AI回复', value:String(totalReplies.value)}])
 const trendCols=[{key:'date',title:'日期'},{key:'success',title:'发货成功'},{key:'fail',title:'发货失败'},{key:'reply',title:'AI回复'}]
 const trendRows = computed(() => (trend.value.dates || []).map((d,i)=>({date:d, success:trend.value.deliverySuccess?.[i] || 0, fail:trend.value.deliveryFail?.[i] || 0, reply:trend.value.aiReplies?.[i] || 0})))
-const quick=[{label:'添加闲鱼账号',key:'accounts'},{label:'发布新商品',key:'product-publish'},{label:'同步商品',key:'products'},{label:'配置自动发货',key:'auto-delivery'},{label:'广告申请',key:'ad-application'},{label:'卡密管理',key:'card-warehouse'},{label:'反馈建议',key:'feedback'},{label:'更多功能',key:'settings-system'}]
+const quick=[{label:'添加闲鱼账号',key:'accounts'},{label:'发布新商品',key:'product-publish'},{label:'同步商品',key:'products'},{label:'配置自动发货',key:'auto-delivery'},{label:'广告申请',key:'ad-application'},{label:'反馈建议',key:'feedback'},{label:'更多功能',key:'settings-system'}]
 function metricValue(value) { return dataAvailable.value ? value : '—' }
 async function load(){
   if (loading.value) return

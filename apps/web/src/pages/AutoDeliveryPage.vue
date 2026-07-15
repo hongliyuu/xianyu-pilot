@@ -141,8 +141,13 @@
 
         <div v-if="configTarget" class="modal-overlay" @click.self="closeConfig">
           <div class="modal-content config-modal">
-            <h3>配置自动发货</h3>
-            <p class="subtle" style="margin:4px 0 0">商品：{{ configTarget.goods.title }}（ID：{{ configTarget.goods.id }}）</p>
+            <div class="config-modal-header">
+              <div class="config-modal-title">
+                <h3>配置自动发货</h3>
+                <p class="subtle">商品：{{ configTarget.goods.title }}（ID：{{ configTarget.goods.id }}）</p>
+              </div>
+              <button class="config-modal-close" type="button" aria-label="关闭" @click="closeConfig">×</button>
+            </div>
 
           <div class="config-tabs">
             <button v-for="timing in configTimings" :key="timing.key" :class="['config-tab', { active: configTiming === timing.key }]" @click="switchTiming(timing.key)">
@@ -151,26 +156,31 @@
           </div>
 
           <div class="form-grid">
-            <div class="form-row">
-              <label>启用{{ currentTimingLabel }}</label>
-              <select v-model.number="configForm.enabled" class="input" style="max-width:200px">
-                <option :value="1">启用</option>
-                <option :value="0">停用</option>
-              </select>
+            <div class="form-section">
+              <div class="form-section-title">基础设置</div>
+              <div class="form-row">
+                <label>启用{{ currentTimingLabel }}</label>
+                <select v-model.number="configForm.enabled" class="input" style="max-width:200px">
+                  <option :value="1">启用</option>
+                  <option :value="0">停用</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label>发货模式</label>
+                <select v-model="configForm.mode" class="input" style="max-width:220px">
+                  <option value="text">文本发货</option>
+                  <option value="card">卡密发货</option>
+                </select>
+              </div>
             </div>
 
-            <div class="form-row">
-              <label>发货模式</label>
-              <select v-model="configForm.mode" class="input" style="max-width:220px">
-                <option value="text">文本发货</option>
-                <option value="card">卡密发货</option>
-              </select>
-            </div>
-
-            <div v-if="configForm.mode === 'text'" class="form-row">
-              <label>关联货源库</label>
-              <div class="toolbar" style="justify-content:flex-start">
-              <select v-model="configForm.sourceId" class="input" style="max-width:320px" :disabled="sourcesAvailable === false">
+            <div v-if="configForm.mode === 'text'" class="form-section">
+              <div class="form-section-title">发货内容</div>
+              <div class="form-row">
+                <label>关联货源库</label>
+                <div class="toolbar" style="justify-content:flex-start">
+                <select v-model="configForm.sourceId" class="input" style="max-width:320px" :disabled="sourcesAvailable === false">
                   <option value="">不使用货源库，直接手写内容</option>
                   <option v-for="source in textSources" :key="source.id" :value="source.id">{{ source.title }}</option>
                 </select>
@@ -182,89 +192,99 @@
               </div>
             </div>
 
-            <div v-if="configForm.mode === 'text'" class="form-row">
-              <label>正文内容</label>
-              <textarea
-                v-model="configForm.content"
-                rows="5"
-                :placeholder="configForm.sourceId ? '已引用货源库正文，可继续补充或覆盖' : '请输入买家将收到的发货内容'"
-              ></textarea>
+              <div class="form-row">
+                <label>正文内容</label>
+                <textarea
+                  v-model="configForm.content"
+                  rows="5"
+                  :placeholder="configForm.sourceId ? '已引用货源库正文，可继续补充或覆盖' : '请输入买家将收到的发货内容'"
+                ></textarea>
+              </div>
             </div>
 
-            <div v-if="configForm.mode === 'card'" class="form-row">
-              <label>卡密来源</label>
-              <select v-model="configForm.cardSource" class="input" style="max-width:320px">
-                <option value="existing">绑定已有卡密分组</option>
-                <option value="direct">直接录入卡密（自动入库）</option>
-              </select>
+            <div v-if="configForm.mode === 'card'" class="form-section">
+              <div class="form-section-title">卡密配置</div>
+              <div class="form-row">
+                <label>卡密来源</label>
+                <select v-model="configForm.cardSource" class="input" style="max-width:320px">
+                  <option value="existing">绑定已有卡密分组</option>
+                  <option value="direct">直接录入卡密（自动入库）</option>
+                </select>
+              </div>
+
+              <div v-if="configForm.cardSource === 'existing'" class="form-row">
+                <label>绑定卡密分组</label>
+                <select v-model="configForm.cardGroupId" class="input" style="max-width:320px" :disabled="cardGroupsAvailable === false">
+                  <option value="">请选择</option>
+                  <option v-for="group in cardGroups" :key="group.id" :value="group.id">{{ group.groupName }}（余 {{ group.remainCount || 0 }}）</option>
+                </select>
+                <div v-if="cardGroupsAvailable === false" class="global-notice error">卡密分组暂不可用，无法安全保存卡密发货配置。</div>
+              </div>
+
+              <div v-if="configForm.cardSource === 'direct'" class="form-row">
+                <label>录入卡密（每行一条，支持换行）</label>
+                <textarea
+                  v-model="configForm.cardKeysText"
+                  rows="8"
+                  placeholder="每行一条卡密，支持换行录入；例如：&#10;CARD-AAAA-BBBB&#10;CARD-CCCC-DDDD&#10;支持 ---- 或逗号分隔卡号和密码"
+                ></textarea>
+                <span class="subtle">已录入 <b>{{ cardKeyCount }}</b> 条卡密，保存后将自动创建卡密分组并入库，归属于当前商品「{{ configTarget.goods.title }}」。用户付款后系统将自动发放一张卡密并扣减库存。</span>
+              </div>
+
+              <div class="form-row">
+                <label>卡密模板</label>
+                <textarea v-model="configForm.cardTemplate" rows="3" placeholder="例如：您的卡密为：{卡密}"></textarea>
+              </div>
             </div>
 
-            <div v-if="configForm.mode === 'card' && configForm.cardSource === 'existing'" class="form-row">
-              <label>绑定卡密分组</label>
-              <select v-model="configForm.cardGroupId" class="input" style="max-width:320px" :disabled="cardGroupsAvailable === false">
-                <option value="">请选择</option>
-                <option v-for="group in cardGroups" :key="group.id" :value="group.id">{{ group.groupName }}（余 {{ group.remainCount || 0 }}）</option>
-              </select>
-              <div v-if="cardGroupsAvailable === false" class="global-notice error">卡密分组暂不可用，无法安全保存卡密发货配置。</div>
+            <div class="form-section">
+              <div class="form-section-title">消息样式</div>
+              <div class="form-row">
+                <label>消息头部</label>
+                <textarea v-model="configForm.header" rows="2" placeholder="可选，发货正文前的说明"></textarea>
+              </div>
+
+              <div v-if="configForm.mode === 'card'" class="form-row">
+                <label>消息底部</label>
+                <textarea
+                  v-model="configForm.footer"
+                  rows="2"
+                  placeholder="可选，卡密内容后的补充说明"
+                ></textarea>
+              </div>
+
+              <div class="form-row">
+                <label>分段发送</label>
+                <label class="checkbox-label">
+                  <input v-model="configForm.segmentSend" type="checkbox" />
+                  使用 `{分段}` 拆成多条消息发送
+                </label>
+              </div>
             </div>
 
-            <div v-if="configForm.mode === 'card' && configForm.cardSource === 'direct'" class="form-row">
-              <label>录入卡密（每行一条，支持换行）</label>
-              <textarea
-                v-model="configForm.cardKeysText"
-                rows="8"
-                placeholder="每行一条卡密，支持换行录入；例如：&#10;CARD-AAAA-BBBB&#10;CARD-CCCC-DDDD&#10;支持 ---- 或逗号分隔卡号和密码"
-              ></textarea>
-              <span class="subtle">已录入 <b>{{ cardKeyCount }}</b> 条卡密，保存后将自动创建卡密分组并入库，归属于当前商品「{{ configTarget.goods.title }}」。用户付款后系统将自动发放一张卡密并扣减库存。</span>
-            </div>
+            <div class="form-section">
+              <div class="form-section-title">高级设置</div>
+              <div class="form-row">
+                <label>失败重试次数</label>
+                <input v-model.number="configForm.retryCount" type="number" min="0" max="10" class="input" style="max-width:120px" />
+              </div>
 
-            <div v-if="configForm.mode === 'card'" class="form-row">
-              <label>卡密模板</label>
-              <textarea v-model="configForm.cardTemplate" rows="3" placeholder="例如：您的卡密为：{卡密}"></textarea>
-            </div>
+              <div class="form-row">
+                <label>库存预警阈值</label>
+                <input v-model.number="configForm.alertThreshold" type="number" min="0" class="input" style="max-width:120px" />
+              </div>
 
-            <div class="form-row">
-              <label>消息头部</label>
-              <textarea v-model="configForm.header" rows="2" placeholder="可选，发货正文前的说明"></textarea>
-            </div>
-
-            <div v-if="configForm.mode === 'card'" class="form-row">
-              <label>消息底部</label>
-              <textarea
-                v-model="configForm.footer"
-                rows="2"
-                placeholder="可选，卡密内容后的补充说明"
-              ></textarea>
-            </div>
-
-            <div class="form-row">
-              <label>分段发送</label>
-              <label class="checkbox-label">
-                <input v-model="configForm.segmentSend" type="checkbox" />
-                使用 `{分段}` 拆成多条消息发送
-              </label>
-            </div>
-
-            <div class="form-row">
-              <label>失败重试次数</label>
-              <input v-model.number="configForm.retryCount" type="number" min="0" max="10" class="input" style="max-width:120px" />
-            </div>
-
-            <div class="form-row">
-              <label>库存预警阈值</label>
-              <input v-model.number="configForm.alertThreshold" type="number" min="0" class="input" style="max-width:120px" />
-            </div>
-
-            <div class="form-row">
-              <label>库存不足自动停用</label>
-              <label class="checkbox-label">
-                <input v-model="configForm.autoDisableOnLowStock" type="checkbox" />
-                自动停用
-              </label>
+              <div class="form-row">
+                <label>库存不足自动停用</label>
+                <label class="checkbox-label">
+                  <input v-model="configForm.autoDisableOnLowStock" type="checkbox" />
+                  自动停用
+                </label>
+              </div>
             </div>
           </div>
 
-          <div class="toolbar" style="justify-content:flex-end;margin-top:16px">
+          <div class="config-modal-footer">
             <AppButton @click="closeConfig">取消</AppButton>
             <AppButton type="primary" :loading="configSaving" @click="saveConfig">保存配置</AppButton>
           </div>
@@ -1079,6 +1099,9 @@ onBeforeUnmount(() => {
   max-height: 88vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .config-modal h3 {
@@ -1088,6 +1111,139 @@ onBeforeUnmount(() => {
 
 .config-modal .form-row textarea {
   min-height: 60px;
+}
+
+/* ===== 弹窗头部 ===== */
+.config-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #eef1f6;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.config-modal-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.config-modal-title h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #15213d;
+  line-height: 1.3;
+}
+
+.config-modal-title .subtle {
+  font-size: 13px;
+  color: #8c98ae;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.config-modal-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 0;
+  background: #f5f6fa;
+  color: #526079;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+  font-family: inherit;
+  padding: 0;
+}
+
+.config-modal-close:hover {
+  background: #ffe5e5;
+  color: #e5484d;
+}
+
+.config-modal-close:focus-visible {
+  outline: 2px solid #2d5bff;
+  outline-offset: 2px;
+}
+
+/* ===== 弹窗内容区（tabs + form-grid 外层 padding） ===== */
+.config-modal > .config-tabs,
+.config-modal > .form-grid {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.config-modal > .config-tabs {
+  margin-top: 16px;
+}
+
+.config-modal > .form-grid {
+  padding-top: 4px;
+  padding-bottom: 8px;
+}
+
+/* ===== 分区容器 ===== */
+.form-section {
+  border: 1px solid #eef1f6;
+  border-radius: 12px;
+  padding: 14px 16px 12px;
+  background: #fbfcfe;
+  margin-bottom: 4px;
+}
+
+.form-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2d5bff;
+  margin-bottom: 12px;
+  padding-left: 10px;
+  position: relative;
+  line-height: 1.4;
+  letter-spacing: .2px;
+}
+
+.form-section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 14px;
+  background: linear-gradient(180deg, #2d5bff, #6a8dff);
+  border-radius: 2px;
+}
+
+.form-section .form-row {
+  margin-bottom: 4px;
+}
+
+.form-section .form-row:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== 弹窗底部 ===== */
+.config-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid #eef1f6;
+  background: #fff;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
 }
 
 .form-grid {
@@ -1277,10 +1433,53 @@ onBeforeUnmount(() => {
   .config-modal {
     max-width: 100%;
     max-height: 90vh;
+    padding: 0;
   }
 
   .modal-content h3 {
     font-size: 17px;
+  }
+
+  /* 配置弹窗：移动端 padding 收敛 */
+  .config-modal-header {
+    padding: 14px 16px 12px;
+  }
+
+  .config-modal-title h3 {
+    font-size: 16px;
+  }
+
+  .config-modal-title .subtle {
+    font-size: 12px;
+  }
+
+  .config-modal-close {
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+  }
+
+  .config-modal > .config-tabs,
+  .config-modal > .form-grid {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .config-modal > .config-tabs {
+    margin-top: 12px;
+  }
+
+  .config-modal-footer {
+    padding: 12px 16px;
+  }
+
+  .form-section {
+    padding: 12px 12px 10px;
+  }
+
+  .form-section-title {
+    font-size: 12px;
+    margin-bottom: 10px;
   }
 
   /* 表单行收敛 */

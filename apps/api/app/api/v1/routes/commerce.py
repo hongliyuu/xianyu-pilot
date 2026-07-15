@@ -1,5 +1,7 @@
+import asyncio
 import datetime
 import json
+import logging
 from collections import defaultdict
 from typing import Any, Optional
 
@@ -11,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ....core.database import get_db
 from ....core.response import ResultObject
 from ....schemas.order import ManualDeliveryReqDTO
+from ....services.business_settings import load_raw_business_setting
 from ....services.manual_delivery import (
     ManualDeliveryCommand,
     ManualDeliveryCoordinator,
@@ -34,6 +37,34 @@ from ..deps import get_current_user
 
 router = APIRouter(tags=["commerceCompat"])
 CONFIG_TIMINGS = ("payDelivery", "confirmDelivery", "reviewDelivery")
+_logger = logging.getLogger(__name__)
+# 保存后台同步任务引用，避免被 GC 回收
+_background_sync_tasks: set = set()
+
+
+async def _run_background_order_sync(account_id: int) -> None:
+    """后台执行订单同步，不阻塞 HTTP 响应。"""
+    try:
+        from ....services.xianyu_order_sync import sync_orders_for_account
+        result = await sync_orders_for_account(account_id=account_id)
+        total = result.get("total", 0) if isinstance(result, dict) else 0
+        _logger.info(
+            "background order sync done accountId=%d total=%d success=%s",
+            account_id, total, bool(result.get("success")) if isinstance(result, dict) else False,
+        )
+    except Exception as exc:
+        _logger.warning("background order sync failed accountId=%d error=%s", account_id, exc)
+
+
+def _spawn_background_order_sync(account_id: int) -> None:
+    """启动后台订单同步任务，立即返回不阻塞。"""
+    try:
+        task = asyncio.create_task(_run_background_order_sync(account_id))
+        _background_sync_tasks.add(task)
+        task.add_done_callback(_background_sync_tasks.discard)
+    except RuntimeError:
+        # 没有 event loop 时降级为同步执行
+        _logger.warning("no event loop for background sync, fallback skipped accountId=%d", account_id)
 
 
 def get_manual_delivery_coordinator(
@@ -151,11 +182,19 @@ def _goods_to_record(
     delivery_meta: Optional[dict[str, Any]] = None,
     remote_delete_meta: Optional[dict[str, Any]] = None,
     off_shelf_meta: Optional[dict[str, Any]] = None,
+    auto_reply_scope_ctx: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     images = _goods_images(goods)
     cover = goods.cover_pic or goods.image_url or (images[0] if images else None)
     auto_reply_enabled = goods.auto_reply_enabled if goods.auto_reply_enabled is not None else 0
     delivery_meta = delivery_meta or {}
+    # 计算自动回复 effective 状态：商品级 > 账号级 > 全局（NULL 不继承全局，默认关闭）
+    # 与 auto_reply_scope.py 的 _compute_effective 保持一致，确保商品管理页与自动回复页同步
+    effective_auto_reply_on = _compute_effective_auto_reply(
+        goods.auto_reply_enabled,
+        goods.account_id,
+        auto_reply_scope_ctx,
+    )
     return {
         "id": goods.id,
         "accountId": goods.account_id,
@@ -183,7 +222,10 @@ def _goods_to_record(
         "wantCount": goods.want_count or 0,
         "autoReplyEnabled": auto_reply_enabled,
         "auto_reply_enabled": auto_reply_enabled,
-        "xianyuAutoReplyOn": 1 if auto_reply_enabled == 1 else 0,
+        # xianyuAutoReplyOn 反映 effective 状态（含账号级继承与全局开关），
+        # 与自动回复页保持一致；auto_reply_enabled 仍保留商品级原始值
+        "xianyuAutoReplyOn": 1 if effective_auto_reply_on else 0,
+        "autoReplyEffectiveOn": 1 if effective_auto_reply_on else 0,
         "xianyuAutoDeliveryOn": 1 if delivery_meta.get("on") else 0,
         "autoDeliveryType": delivery_meta.get("type"),
         "remoteDeleteAttempt": remote_delete_meta,
@@ -193,6 +235,45 @@ def _goods_to_record(
         "created_time": _format_datetime(goods.created_time),
         "updated_time": _format_datetime(goods.updated_time),
     }
+
+
+def _compute_effective_auto_reply(
+    product_enabled: Optional[int],
+    account_id: Optional[int],
+    ctx: Optional[dict[str, Any]],
+) -> bool:
+    """计算商品的 effective auto_reply 状态。
+
+    优先级：商品级 > 账号级 > 全局（NULL 不继承全局，默认关闭）。
+    与 auto_reply_scope.py 的 _compute_effective 逻辑保持一致。
+    """
+    if ctx is None:
+        # 未提供作用域上下文时退化为只看商品级，保持向后兼容
+        return product_enabled == 1
+    if not ctx.get("global_enabled", False):
+        return False
+    if product_enabled is not None:
+        return product_enabled == 1
+    accounts = ctx.get("account_scopes", {}) or {}
+    if account_id is not None and str(account_id) in accounts:
+        return bool(accounts[str(account_id)])
+    return False
+
+
+async def _load_auto_reply_scope_ctx(db: AsyncSession) -> dict[str, Any]:
+    """加载自动回复作用域上下文：全局开关 + 账号级作用域。"""
+    try:
+        global_config = await load_raw_business_setting(db, "ai-customer-service")
+        global_enabled = bool(global_config.get("enabled", False)) if isinstance(global_config, dict) else False
+        scopes_config = await load_raw_business_setting(db, "auto-reply-account-scopes")
+        account_scopes = scopes_config.get("accounts", {}) if isinstance(scopes_config, dict) else {}
+        return {
+            "global_enabled": global_enabled,
+            "account_scopes": account_scopes,
+        }
+    except Exception:
+        # 读取失败时不影响商品列表查询，退化为只看商品级
+        return {"global_enabled": True, "account_scopes": {}}
 
 
 async def _load_goods_delivery_meta(
@@ -539,12 +620,14 @@ async def list_goods(
     delivery_meta = await _load_goods_delivery_meta(db, goods_ids)
     remote_delete_meta = await _load_goods_remote_delete_meta(db, goods_ids)
     off_shelf_meta = await _load_goods_off_shelf_meta(db, goods_ids)
+    auto_reply_scope_ctx = await _load_auto_reply_scope_ctx(db)
     records = [
         _goods_to_record(
             goods,
             delivery_meta.get(int(goods.id)),
             remote_delete_meta.get(int(goods.id)),
             off_shelf_meta.get(int(goods.id)),
+            auto_reply_scope_ctx,
         )
         for goods in goods_list
     ]
@@ -789,14 +872,9 @@ async def list_orders(
     db: AsyncSession = Depends(get_db),
     _: dict = Depends(get_current_user),
 ):
-    # sync=true 时先从闲鱼拉取最新订单入库，再返回本地查询结果
+    # sync=true 时后台触发闲鱼订单拉取，不阻塞当前请求
     if sync and account_id is not None:
-        from ....services.xianyu_order_sync import sync_orders_for_account
-        try:
-            await sync_orders_for_account(account_id=int(account_id))
-        except Exception as exc:
-            import logging
-            logging.getLogger(__name__).warning("list_orders 同步失败: accountId=%s error=%s", account_id, exc)
+        _spawn_background_order_sync(account_id=int(account_id))
 
     query = select(XianyuTradeOrder).where(XianyuTradeOrder.deleted == 0)
     if account_id is not None:

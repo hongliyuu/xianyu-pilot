@@ -136,7 +136,6 @@ const pageMap = {
   'product-publish': asyncPage(() => import('./pages/ProductPublishPage.vue')),
   messages: asyncPage(() => import('./pages/MessagesPage.vue')),
   'message-center': asyncPage(() => import('./pages/MessagesPage.vue')),
-  'card-warehouse': asyncPage(() => import('./pages/CardWarehousePage.vue')),
   'auto-delivery': asyncPage(() => import('./pages/AutoDeliveryPage.vue')),
   'delivery-source-library': asyncPage(() => import('./pages/DeliverySourceLibraryPage.vue')),
   'delivery-statement': asyncPage(() => import('./pages/DeliveryStatementPage.vue')),
@@ -577,11 +576,6 @@ const headerActions = computed(() => {
       { text: '+ 发布商品', type: 'primary', to: 'product-publish' }
     ],
     orders: [{ text: '刷新订单', type: 'ghost', event: 'orders-refresh' }],
-    'card-warehouse': [
-      { text: '新建卡密组', type: 'primary', event: 'cards-create-group' },
-      { text: '导出当前分组', type: 'ghost', event: 'cards-export-current' },
-      { text: '刷新数据', type: 'ghost', event: 'cards-refresh' }
-    ],
     'auto-delivery': [
       { text: '批量设置', type: 'primary', event: 'delivery-batch' },
       { text: '货源库', type: 'ghost', to: 'delivery-source-library' },

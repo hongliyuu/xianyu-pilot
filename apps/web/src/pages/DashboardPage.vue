@@ -801,7 +801,6 @@ const features = [
   { t: '自动发货', d: '按已配置规则处理发货，异常与未知结果需人工复核', i: 'truck', c: 'orange-bg', to: 'auto-delivery', targetLabel: '自动化' },
   { t: '广告合作', d: '查看商业服务返回的真实套餐；未配置时页面会明确禁用提交与支付。', i: 'opportunity', c: 'purple-bg', to: 'ad-application', targetLabel: '广告申请' },
   { t: '系统设置', d: '集中管理通用模型、向量模型、RAG 知识库与高德地图配置。', i: 'settings', c: 'cyan-bg', to: 'settings-system', targetLabel: '系统配置' },
-  { t: '卡密仓库', d: '管理卡密资源，安全存储和使用', i: 'key', c: 'orange-bg', to: 'card-warehouse', targetLabel: '卡密仓库' },
   { t: '数据统计', d: '查看订单、发货与自动回复的实际汇总', i: 'data', c: 'blue-bg', to: 'data', targetLabel: '数据面板' }
 ]
 

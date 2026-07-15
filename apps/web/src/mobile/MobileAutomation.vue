@@ -63,17 +63,6 @@
         <h2>配套模块</h2>
       </div>
       <div class="m-menu-list">
-        <button class="m-menu-item" @click="$emit('navigate', 'card-warehouse')">
-          <div class="m-menu-icon m-menu-violet">
-            <MIcon name="box" :size="20" />
-          </div>
-          <div class="m-menu-info">
-            <div class="m-menu-title">卡密仓库</div>
-            <div class="m-menu-desc">数字商品库存和卡密状态管理</div>
-          </div>
-          <MIcon name="chevronRight" :size="16" class="m-menu-arrow" />
-        </button>
-
         <button class="m-menu-item" @click="$emit('navigate', 'connections')">
           <div class="m-menu-icon m-menu-sky">
             <MIcon name="activity" :size="20" />

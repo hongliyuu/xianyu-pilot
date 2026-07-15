@@ -36,6 +36,30 @@ DELIVERY_TIMING_AFTER_PAYMENT = "after_payment"
 _SAFE_LOG_CODE_RE = re.compile(r"[^a-z0-9_]+")
 _MAX_REALTIME_QUANTITY = 100
 
+# 付款事件正向关键词：reminder 文本命中任一即视为已付款
+_PAYMENT_POSITIVE_KEYWORDS = (
+    "等待你发货",
+    "已付款",
+    "买家已付款",
+    "买家付款成功",
+    "付款成功",
+    "支付成功",
+    "已支付",
+    "买家已支付",
+    "等待发货",
+    "待发货",
+    "买家已拍下并付款",
+)
+# 付款事件负向关键词：命中任一即视为未付款（优先级高于正向）
+_PAYMENT_NEGATIVE_KEYWORDS = (
+    "待付款",
+    "拍下待付",
+    "待买家付款",
+    "等待买家付款",
+    "未付款",
+    "尚未付款",
+)
+
 
 def extract_order_id_from_url(url: str) -> Optional[str]:
     """Extract a non-empty order identifier from a reminder URL."""
@@ -117,17 +141,31 @@ def is_payment_message(msg: dict) -> bool:
     except (TypeError, ValueError):
         content_type_int = 0
     reminder = str(msg.get("reminderContent") or msg.get("reminder_content") or "")
+    reminder_preview = reminder[:120]
 
-    # "待付款"表示买家仅拍下尚未付款，必须跳过，避免未付款就发货
-    if "待付款" in reminder:
-        return False
+    # 负向关键词优先：明确表示未付款，必须跳过
+    for neg in _PAYMENT_NEGATIVE_KEYWORDS:
+        if neg in reminder:
+            logger.info(
+                "is_payment_message denied by negative keyword='%s' contentType=%d reminder=%s",
+                neg, content_type_int, reminder_preview,
+            )
+            return False
 
-    # contentType=26 是订单类系统通知，但涵盖拍下/付款/收货等多个阶段，
-    # 只有提醒文本明确表示已付款或等待发货时才视为付款事件
-    if content_type_int == 26:
-        return "已付款" in reminder or "等待你发货" in reminder
+    # 正向关键词：明确表示已付款或等待发货
+    for pos in _PAYMENT_POSITIVE_KEYWORDS:
+        if pos in reminder:
+            logger.info(
+                "is_payment_message accepted by positive keyword='%s' contentType=%d",
+                pos, content_type_int,
+            )
+            return True
 
-    return "等待你发货" in reminder or "已付款" in reminder
+    logger.debug(
+        "is_payment_message denied no keyword matched contentType=%d reminder=%s",
+        content_type_int, reminder_preview,
+    )
+    return False
 
 
 def is_bargain_success_message(msg: dict) -> bool:
@@ -147,10 +185,21 @@ async def handle_incoming_message_for_delivery(
     """Process one stored WebSocket event through the durable state machine."""
 
     payment_event = is_payment_message(msg)
-    if not payment_event and not is_bargain_success_message(msg):
+    bargain_event = is_bargain_success_message(msg)
+    if not payment_event and not bargain_event:
+        # 记录跳过原因，便于排查"收到付款通知但未触发发货"
+        reminder = str(msg.get("reminderContent") or msg.get("reminder_content") or "")
+        content_type = msg.get("contentType") or msg.get("content_type") or 0
+        logger.debug(
+            "delivery event skipped accountId=%d payment=%s bargain=%s contentType=%s reminder=%s",
+            account_id, payment_event, bargain_event, content_type, reminder[:80],
+        )
         return
 
-    logger.info("Realtime delivery event accepted accountId=%d", account_id)
+    logger.info(
+        "Realtime delivery event accepted accountId=%d payment=%s bargain=%s",
+        account_id, payment_event, bargain_event,
+    )
     async with async_session() as db:
         try:
             outcome = await _process_delivery(db, account_id, msg)
@@ -207,17 +256,21 @@ async def _process_delivery(
     ]
     if missing:
         logger.warning(
-            "Realtime delivery denied accountId=%d missingContext=%s",
+            "Realtime delivery denied accountId=%d missingContext=%s reminderUrl=%s itemId=%s peerId=%s",
             account_id,
             ",".join(missing),
+            reminder_url[:120],
+            item_id,
+            peer_id,
         )
         return None
 
     quantity = extract_buy_quantity_from_msg(msg)
     if quantity > _MAX_REALTIME_QUANTITY:
         logger.warning(
-            "Realtime delivery denied accountId=%d errorCode=quantity_limit_exceeded",
+            "Realtime delivery denied accountId=%d errorCode=quantity_limit_exceeded quantity=%d",
             account_id,
+            quantity,
         )
         return None
 
@@ -233,6 +286,16 @@ async def _process_delivery(
         account_id=account_id,
         external_goods_id=item_id,
     )
+    if not rule:
+        logger.warning(
+            "Realtime delivery no rule matched accountId=%d itemId=%s orderId=%s",
+            account_id, item_id, external_order_id,
+        )
+    else:
+        logger.info(
+            "Realtime delivery rule matched accountId=%d itemId=%s ruleId=%s mode=%s",
+            account_id, item_id, rule.get("id"), rule.get("delivery_mode"),
+        )
     mode = _normalize_delivery_mode(rule.get("delivery_mode") if rule else "unconfigured")
     content = str((rule or {}).get("delivery_content") or "")
     content = _render_delivery_content(
