@@ -31,6 +31,7 @@ from ....services.sensitive_config import (
     is_sensitive_setting_key,
     prepare_secret_for_storage,
 )
+from ....services.update_info import build_update_info
 from ....schemas.auth import ChangePasswordReqDTO
 from ....schemas.common import (
     AiProviderReqDTO,
@@ -436,3 +437,62 @@ async def change_password(
     if error:
         return ResultObject.validate_failed(error)
     return ResultObject.success("密码修改成功")
+
+
+@system_info_router.get("/update-info", response_model=ResultObject[dict])
+async def get_update_info(
+    current_user: dict = Depends(get_current_user),
+):
+    del current_user
+    # APP_VERSION is injected by Vite on the frontend; the backend uses the
+    # package version read from app metadata if available, else "1.0.0".
+    current_version = "1.0.0"
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+        try:
+            current_version = version("xianyu-assistant")
+        except PackageNotFoundError:
+            pass
+    except ImportError:
+        pass
+    try:
+        payload = await build_update_info(current_version)
+        return ResultObject.success(payload)
+    except Exception:
+        logger.error("Failed to build update info", exc_info=True)
+        return ResultObject.internal_error()
+
+
+@system_info_router.post("/update-feedback", response_model=ResultObject[str])
+async def report_update_feedback(
+    payload: dict | None = None,
+    request: Request = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if not isinstance(payload, dict):
+        payload = {}
+    success = bool(payload.get("success"))
+    from_version = str(payload.get("fromVersion") or "")
+    to_version = str(payload.get("toVersion") or "")
+    deployment_mode = str(payload.get("deploymentMode") or "")
+    note = str(payload.get("note") or "")[:500]
+    operator = current_user.get("username", settings.admin_username)
+    desc = f"用户反馈更新执行结果: {from_version}->{to_version}, mode={deployment_mode}, success={success}"
+    if note:
+        desc += f", note={note}"
+    db.add(XianyuOperationLog(
+        operator=operator,
+        operation_type="update_pull",
+        operation_desc=desc,
+        target_type="system",
+        target_id="update",
+        ip_address=request_client_ip(request) if request else "127.0.0.1",
+    ))
+    try:
+        await db.commit()
+    except Exception:
+        logger.error("Failed to persist update feedback", exc_info=True)
+        await db.rollback()
+        return ResultObject.internal_error()
+    return ResultObject.success("反馈已记录")
