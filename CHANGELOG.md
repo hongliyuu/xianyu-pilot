@@ -9,6 +9,9 @@
 ## [Unreleased]
 
 ### 新增
+- **一键启动脚本**：新增 `start.sh`（Linux/macOS）与 `start.bat`（Windows）入口脚本，自动调用初始化向导、拉取镜像、启动 7 个服务并等待健康检查；支持 `--build`（本地源码构建）和 `--no-pull`（跳过拉取）参数
+- **首次初始化向导**：新增 `scripts/setup-wizard.sh` 与 `scripts/setup-wizard.ps1`，首次启动自动生成 7 组随机 secrets（MySQL root/app/migration 三组、Redis、JWT、Cookie、Token，均 Base64URL 编码 ≥32 字符）、4 个空的可选 secrets、bcrypt cost 12 admin 密码 hash 和 `.env` 文件；优先用主机 Python，缺失时自动退到 Docker 临时容器生成
+- **跨平台运维包装器**：新增 `scripts/production_ops.py`，提供 `status`/`logs`/`stop`/`restart` 四个子命令，限制日志服务名白名单（mysql/redis/migrate/api/worker/crawler/web）和 `--tail` 范围（1-10000），停止命令默认不删除命名卷
 - **小刀订单免拼发货**：小刀（砍价）订单自动调用闲鱼免拼发货接口（mtop.idle.groupon.activity.seller.freeshipping）完成发货，而非普通确认发货接口；订单同步时通过 btnList 的 SKIP_PIN 自动检测小刀订单并标记 is_bargain（只置 True 不回退）；自动发货网关根据订单小刀状态智能路由免拼/确认发货接口
 - **发布商品页面增强**：运费设置支持包邮/一口价/无需邮寄三模式互斥切换；图片 URL 增加 resolveTrustedMediaUrl 白名单防护（防 XSS）；图片上传增加 imageUploadValidationMessage 预校验（大小≤5MB、MIME 类型、扩展名）；账号选择增加 pickPreferredAccount 智能选择（优先可用账号）
 - **在线消息页面客户订单板块**：会话侧边栏新增客户订单卡片（封面、状态徽章、金额、订单详情入口）；新增 getCustomerOrders API；后端 /orders 接口支持 buyerId 过滤
@@ -28,6 +31,8 @@
 - **账号鉴权工具增强**：accountAuth.js 新增 pickPreferredAccount（智能账号选择）、accountWsConnectionState（WS 三态）、resolveAccountAuthDisplayState（Cookie+WS 综合状态）、shouldAttemptAccountWebSocketStart
 
 ### 修复
+- **docker-compose secrets 机制修复**：原 `secrets:` 顶层使用 `environment: ADMIN_PASSWORD_HASH` 模式期望主机环境变量为明文，但 `.env.example` 仅配置了 `_FILE` 路径变量，导致 `docker compose up` 时 secret 内容为空触发 fail-closed 启动失败；现统一改为 `file: ./secrets/<name>` 模式，与 `.env.example` 的 `_FILE` 路径完全对齐
+- **生产部署默认值修复**：`.env.example` 中 `AUDIT_MUTATION_INTENT_REQUIRED` 改为 `true`（生产预检强制要求），`WEB_BIND_ADDRESS` 改为 `0.0.0.0`（便于局域网访问，原 `127.0.0.1` 导致 VPS 部署后浏览器无法访问）
 - **订单同步结果判断 BUG**：syncCurrentOrder 此前忽略 data.ok 字段，同步失败时仍显示绿色成功提示；现改为基于 data.ok 分支显示成功或失败
 - **订单详情回退到行数据**：selectOrder 此前在详情加载失败时回退到 row 概要数据当详情展示；现改为严格校验 id 匹配，失败时不回退
 - **仪表盘功能特性板块溢出**：在 1501-1680px 中宽屏下，「功能特性」与「快速开始」卡片降为 3 列布局，解决 4 列时单卡过窄导致长描述与「点击进入 XXX」副文本大量换行、超出容器的问题

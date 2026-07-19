@@ -90,11 +90,11 @@
 
 ## 🚀 3 分钟快速上手
 
-> 适合第一次使用的用户。脚本会自动生成随机 secrets、检测端口冲突，无需手动配置任何密码文件。
+> 适合第一次使用的用户。一键脚本会自动生成所有 secrets、bcrypt 密码 hash、`.env` 配置，无需手动创建任何密码文件。
 
 ### 前置要求
 - Docker 24+ 与 Docker Compose v2（[安装 Docker](https://docs.docker.com/get-docker/)）
-- 一台 Linux / macOS / Windows 机器
+- 一台 Linux / macOS / Windows 机器（建议 2GB+ 内存）
 
 ### 步骤
 
@@ -104,33 +104,51 @@
    cd xianyu-assistant-opensource
    ```
 
-2. **一键启动**（脚本会在首次运行时自动调用设置向导）
+2. **一键启动**
    ```bash
    sh ./start.sh          # Linux/macOS
-   # 或 .\start.bat       # Windows PowerShell
+   # 或 .\start.bat       # Windows（PowerShell/CMD 均可）
    ```
 
-   向导会自动：
-   - 检测 Docker 是否安装
-   - 在 `./secrets/` 目录生成随机 secret 文件
-   - 校验 `docker compose` 配置
-   - 启动所有服务并等待健康
+   首次启动时脚本会自动：
+   - 检测 Docker 与 Docker Compose v2
+   - 在 `./secrets/` 目录生成所有随机密钥文件（MySQL/Redis/JWT/Cookie/Token 共 7 组，权限 0600）
+   - 用 bcrypt cost 12 生成 admin 密码 hash（默认密码 `admin123`，可改）
+   - 从 `.env.example` 复制生成 `.env`
+   - 拉取预构建镜像并启动 7 个服务（mysql/redis/migrate/crawler/api/worker/web）
+   - 等待 Web 健康检查通过（最长 3 分钟）
 
 3. **访问服务**
 
-   打开浏览器访问 http://localhost:8080
+   浏览器打开 http://localhost:8080
 
    - 默认账号：`admin`
-   - 首次启动时，请按终端提示用 bcrypt 生成你自己的密码 hash 替换 `./secrets/admin-password-hash`
+   - 默认密码：`admin123`（终端会打印，请尽快在系统设置中修改）
+
+### 自定义 admin 密码
+
+```bash
+# Linux/macOS：在启动前设置环境变量
+ADMIN_PASSWORD="your-strong-password" sh ./start.sh
+
+# Windows PowerShell
+$env:ADMIN_PASSWORD="your-strong-password"; .\start.bat
+```
+
+### Windows 用户提示
+
+`start.bat` 会调用 `scripts/setup-wizard.ps1`。如果 PowerShell 执行策略受限，脚本会自动用 `-ExecutionPolicy Bypass` 启动，无需手动修改系统策略。
 
 ### 常见问题
 
 | 问题 | 解决方法 |
 |---|---|
-| 端口 8080 被占用 | 修改 `.env` 中的 `WEB_PORT=8081` 后重新启动 |
-| 拉取 GHCR 镜像慢 | 进入"关于我们"页检查更新，切换镜像源 |
-| 忘记 admin 密码 | 重新生成 bcrypt hash 写入 `./secrets/admin-password-hash` 后重启 |
-| 想更新到最新版 | 进入"关于我们"页 → 点击"检查更新" → 复制脚本执行 |
+| 端口 8080 被占用 | 修改 `.env` 中的 `WEB_PORT=8081` 后重新运行 `sh ./start.sh --no-pull` |
+| 拉取 GHCR 镜像慢 | 进入"关于我们"页检查更新，切换镜像源；或用 `sh ./start.sh --build` 本地构建 |
+| 忘记 admin 密码 | 删除 `./secrets/admin-password-hash` 后重跑 `sh ./scripts/setup-wizard.sh`，或手动用 bcrypt 生成 hash 写入该文件 |
+| 想更新到最新版 | 进入"关于我们"页 → 点击"检查更新" → 复制脚本执行；或 `git pull && sh ./start.sh` |
+| 局域网其他机器访问不了 | 确认 `.env` 中 `WEB_BIND_ADDRESS=0.0.0.0`（默认即是），防火墙放行 8080 端口 |
+| 想完全重新初始化 | 删除 `.env` 和 `./secrets/` 目录后重跑 `sh ./start.sh`（注意：会丢失已有数据，请先备份） |
 
 ---
 
@@ -168,83 +186,47 @@ xianyu-assistant-opensource/
 ### 前置要求
 
 - 受支持的 Linux 与 Docker Engine
-- 支持 `up --wait` / `--wait-timeout` 能力的 Docker Compose v2
-- Python 3（用于不会回显秘密的启动前检查）
-- 同机 TLS 反向代理/负载均衡器、备份、监控和密钥管理设施
+- Docker Compose v2（已包含在 Docker Desktop 和 `docker-compose-plugin` 中）
+- 推荐同机 TLS 反向代理（如需对公网服务）
 
-### 安全启动方式
+### 启动方式
 
-1. **复制环境变量模板**
+`start.sh` / `start.bat` 已经覆盖所有部署场景：
 
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+sh ./start.sh              # 拉取预构建镜像（推荐）
+sh ./start.sh --build      # 本地源码构建（适用于自定义修改或离线场景）
+sh ./start.sh --no-pull    # 跳过镜像拉取，使用本地已有镜像
+```
 
-   Windows 也可以直接运行 `start.bat`，脚本会在缺少 `.env` 时自动从模板创建。
+Windows 使用 `.\start.bat`，参数相同。
 
-2. **填写所有标记为 `REQUIRED` 的空项**，至少包括：
+脚本工作流程：
+1. 首次运行调用 `scripts/setup-wizard.sh`（或 `.ps1`）：生成 7 组随机 secrets、4 个空的可选 secrets、bcrypt admin 密码 hash、`.env` 文件
+2. 拉取多架构预构建镜像（`linux/amd64` + `linux/arm64`，Intel Mac、Apple Silicon 与 x86 服务器原生派发，无需 QEMU）
+3. 启动 7 个服务并等待 Web 健康检查通过
 
-   - `ADMIN_PASSWORD_HASH_FILE`（文件内容为 bcrypt cost >= 12 的哈希，不写明文密码）
-   - `MYSQL_ROOT_PASSWORD_FILE`、仅供迁移的 `MYSQL_MIGRATION_PASSWORD_FILE`、仅供 API/Worker 的 `MYSQL_APP_PASSWORD_FILE`（三组凭据不得复用）
-   - `REDIS_PASSWORD_FILE`
-   - `JWT_SECRET_FILE`
-   - `COOKIE_CRYPTO_SECRET_FILE`
-   - `INTERNAL_API_TOKEN_FILE`
+镜像源与命名空间可在 `.env` 的 `Prebuilt Docker images` 段覆盖；要切回本地源码构建用 `--build` 参数。
 
-   `.env` 只填写受保护的密钥文件路径，不填写密钥值。`./secrets` 目录建议权限为 `0700`，文件为 `0600`；每个密码/密钥必须独立随机生成，不能复用模板、开发或其他系统秘密。
+> Compose 会先运行一次性 `migrate` 服务，再允许 API 和 Worker 启动；新库与旧库都走同一个带历史记录和 MySQL 单实例锁的版本化 runner。维护窗口、备份、状态检查和回滚兼容流程见 [`apps/api/migrations/README.md`](apps/api/migrations/README.md)。
 
-3. **启动所有服务**（任选一种）
+### 暴露到公网
 
-   - **拉取预构建镜像**（推荐，免本地构建）：每次推送到 `main` 分支时 GitHub Actions 会自动构建 `api`/`web`/`crawler` 镜像并发布到 GHCR，直接拉取即可运行。
+默认绑定 `0.0.0.0:8080` 便于局域网访问。暴露到公网前请：
 
-     ```bash
-     docker compose pull
-     docker compose up -d
-     ```
+1. 在 `.env` 中将 `TRUSTED_HOSTS` 改为实际域名（例如 `assistant.example.com,localhost,127.0.0.1,api`）
+2. 在宿主机部署 TLS 反向代理（Nginx/Caddy），将 443 流量转发到 `127.0.0.1:8080`
+3. 将 `WEB_BIND_ADDRESS` 改回 `127.0.0.1`，仅让 TLS 代理访问
 
-     镜像源与命名空间可在 `.env` 的 `Prebuilt Docker images` 段覆盖；要切回本地源码构建用 `docker compose up -d --build`。
+API、Crawler、MySQL、Redis 没有宿主机发布端口，只有容器内部地址。
 
-     > 镜像以多架构 manifest 发布（`linux/amd64` + `linux/arm64`），Intel Mac、Apple Silicon Mac（M1/M2/M3/M4）和 x86 服务器均可由 `docker compose pull` 自动派发对应架构的原生镜像，无需 QEMU 模拟。
-
-   - **本地源码构建**：适用于自定义修改或离线场景。
-
-     ```bash
-     sh ./start.sh
-     ```
-
-     Windows 使用 `start.bat`。脚本会依次执行秘密安全校验、`docker compose config --quiet`、镜像构建、容器健康等待和 Web 健康探测；任一必填秘密不安全时会拒绝启动。
-
-   Compose 会先运行一次性 `migrate` 服务，再允许 API 和 Worker 启动；新库与旧库都走同一个带历史记录和 MySQL 单实例锁的版本化 runner。维护窗口、备份、状态检查和回滚兼容流程见 [`apps/api/migrations/README.md`](apps/api/migrations/README.md)。
-
-4. **访问服务**
-
-   Compose 默认仅把 Web 绑定到 `127.0.0.1:8080`，供同机 TLS 代理访问。API、Crawler、MySQL、Redis 只有容器内部地址，没有宿主机发布端口。不提供默认密码，也不开放生产 API 文档。对公网服务前必须从 HTTPS 域名验收。
-
-   > API 错误同时使用真实 HTTP 状态码和顶层 `code/msg/data` 信封：参数错误、冲突、资源不存在、依赖不可用和内部错误不会再以 HTTP 200 伪装成功。调用方应以 HTTP 状态为主、信封错误码为业务细节；已退役兼容面统一返回 HTTP 410 和迁移指引。
+> API 错误同时使用真实 HTTP 状态码和顶层 `code/msg/data` 信封：参数错误、冲突、资源不存在、依赖不可用和内部错误不会再以 HTTP 200 伪装成功。调用方应以 HTTP 状态为主、信封错误码为业务细节；已退役兼容面统一返回 HTTP 410 和迁移指引。
 
 ## 🖥️ 本地开发
 
-本地开发与生产部署是两条独立路径。生产 `docker-compose.yml` 会强制要求全部生产秘密，不应再被当作“只启动 MySQL/Redis”的无密码开发捷径。完整步骤、端口和 Windows 快捷入口见 [`docs/local-dev-runbook.md`](docs/local-dev-runbook.md)。
+本地开发与生产部署是两条独立路径。生产 `docker-compose.yml` 会强制要求全部生产秘密，不应再被当作"只启动 MySQL/Redis"的无密码开发捷径。完整步骤、端口和本地裸机启动方式见 [`docs/local-dev-runbook.md`](docs/local-dev-runbook.md)。
 
 Crawler 的所有 `/api/*` 路由都应使用 `X-Internal-Token`；生产仅允许容器内 API 访问。健康检查是 `/health`，就绪检查是 `/ready`。
-
-### Windows 快捷入口
-
-如果你的机器没有 Docker，推荐直接使用这些脚本：
-
-```bat
-start-local.bat
-status-local.bat
-stop-local.bat
-verify-local.bat
-```
-
-说明：
-
-- `start-local.bat` 会先检查隔离端口、执行版本化数据库迁移和 Crawler 构建，再以受管后台进程启动 API、Crawler、Web，并等待三者就绪
-- `status-local.bat` 查看本地 15177 / 15178 / 15176 端口和受管 PID 状态
-- `stop-local.bat` 只停止 PID 文件与监听端口完全匹配的本项目进程；发现未受管监听器时会保留并告警
-- `verify-local.bat` 会串行执行 Web 构建、API 编译检查和 Crawler 构建
 
 
 ### 代码中还支持的补充变量
@@ -263,7 +245,7 @@ verify-local.bat
 
 | 服务 | 容器端口 | 宿主发布 |
 |------|------|------|
-| Web | `8080` | 默认 `127.0.0.1:8080`，应由 TLS 入口代理 |
+| Web | `8080` | 默认 `0.0.0.0:8080`，便于局域网访问；公网部署建议改回 `127.0.0.1` 并由 TLS 入口代理 |
 | API | `12401` | 不发布，仅 Web/内部网络 |
 | Crawler | `3001` | Compose 容器内私有端口，不映射宿主机，仅 API/内部网络 |
 | MySQL | `3306` | 不发布，仅内部网络 |
@@ -271,12 +253,12 @@ verify-local.bat
 
 ## 🛠️ 常用命令
 
-生产环境不要直接运行裸 `docker compose` 命令：Compose 顶层 secrets 需要由安全入口从受保护文件读入，并且只注入短生命周期子进程。启动、重建和上线验收始终走 `start.sh` / `start.bat`（内部调用 `scripts/verify_production.py`）；状态、日志和停止使用跨平台的固定命令包装器：
+启动、重建和上线验收始终走 `start.sh` / `start.bat`；状态、日志和停止使用跨平台的固定命令包装器：
 
 ```bash
-# 启动、构建、等待健康并验证真实 TLS 入口
+# 启动、构建、等待健康
 sh ./start.sh
-# Windows: start.bat
+# Windows: .\start.bat
 
 # 查看全部服务状态（包含已退出的一次性迁移服务）
 python scripts/production_ops.py --env-file .env status
@@ -289,9 +271,12 @@ python scripts/production_ops.py --env-file .env logs --follow --tail 200 api wo
 
 # 停止并移除本项目容器和网络；不会删除命名卷或镜像
 python scripts/production_ops.py --env-file .env stop
+
+# 重启特定服务
+python scripts/production_ops.py --env-file .env restart api web
 ```
 
-日志服务名仅允许 `mysql`、`redis`、`migrate`、`api`、`worker`、`crawler`、`web`；`--tail` 范围为 1–10000。不提供任意 Compose 参数透传，包装器会忽略宿主机残留的 Compose 项目/文件/profile 覆盖，并对已加载密钥做流式脱敏。需要再次启动时重新运行 `start.sh` / `start.bat`，以重新执行预检和本地/公网 TLS 就绪验证。
+日志服务名仅允许 `mysql`、`redis`、`migrate`、`api`、`worker`、`crawler`、`web`；`--tail` 范围为 1–10000。需要再次启动时重新运行 `start.sh` / `start.bat` 即可。
 
 
 ## 📚 参考文档

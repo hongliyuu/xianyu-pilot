@@ -452,27 +452,30 @@ volumes:
   api_data:
 
 secrets:
+  # 所有密钥均从 ./secrets/<name> 文件读取，由 start.sh / start.bat 首次启动时
+  # 自动生成。容器内通过 environment 中的 *_FILE=/run/secrets/<target> 读取。
+  # 主机文件路径与 .env.example 中的 *_FILE 变量保持一致作为文档说明。
   admin_password_hash:
-    environment: ADMIN_PASSWORD_HASH
+    file: ./secrets/admin-password-hash
   mysql_root_password:
-    environment: MYSQL_ROOT_PASSWORD
+    file: ./secrets/mysql-root-password
   mysql_app_password:
-    environment: MYSQL_APP_PASSWORD
+    file: ./secrets/mysql-app-password
   mysql_migration_password:
-    environment: MYSQL_MIGRATION_PASSWORD
+    file: ./secrets/mysql-migration-password
   redis_password:
-    environment: REDIS_PASSWORD
+    file: ./secrets/redis-password
   jwt_secret:
-    environment: JWT_SECRET
+    file: ./secrets/jwt-secret
   cookie_crypto_secret:
-    environment: COOKIE_CRYPTO_SECRET
+    file: ./secrets/cookie-crypto-secret
   internal_api_token:
-    environment: INTERNAL_API_TOKEN
+    file: ./secrets/internal-api-token
   commercial_backend_access_token:
-    environment: COMMERCIAL_BACKEND_ACCESS_TOKEN
+    file: ./secrets/commercial-backend-access-token
   embedding_api_key:
-    environment: EMBEDDING_API_KEY
+    file: ./secrets/embedding-api-key
   ai_provider_api_key:
-    environment: AI_PROVIDER_API_KEY
+    file: ./secrets/ai-provider-api-key
   amap_api_key:
-    environment: AMAP_API_KEY
+    file: ./secrets/amap-api-key

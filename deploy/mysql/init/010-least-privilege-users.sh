@@ -84,6 +84,8 @@ migration_password_b64=$(encode_value "$MYSQL_MIGRATION_PASSWORD")
 
 # MYSQL_PWD keeps the root credential out of the process argument list. Values
 # interpolated below are base64, then quoted by MySQL before dynamic execution.
+# 注意：heredoc 用 <<SQL（不带引号）以允许 $variable 插值，但 SQL 中的反引号字符（`）
+# 会被 sh 解释为命令替换。因此用 CHAR(96) 函数替代字面反引号，避免 shell 解析冲突。
 export MYSQL_PWD="$MYSQL_ROOT_PASSWORD"
 mysql --protocol=socket --user=root <<SQL
 SET @database_name = CONVERT(FROM_BASE64('$database_b64') USING utf8mb4);
@@ -91,7 +93,7 @@ SET @app_user = CONVERT(FROM_BASE64('$app_user_b64') USING utf8mb4);
 SET @app_password = CONVERT(FROM_BASE64('$app_password_b64') USING utf8mb4);
 SET @migration_user = CONVERT(FROM_BASE64('$migration_user_b64') USING utf8mb4);
 SET @migration_password = CONVERT(FROM_BASE64('$migration_password_b64') USING utf8mb4);
-SET @database_identifier = CONCAT('`', REPLACE(@database_name, '`', '``'), '`');
+SET @database_identifier = CONCAT(CHAR(96), REPLACE(@database_name, CHAR(96), CONCAT(CHAR(96), CHAR(96))), CHAR(96));
 SET @app_identity = CONCAT(QUOTE(@app_user), '@', QUOTE('%'));
 SET @migration_identity = CONCAT(QUOTE(@migration_user), '@', QUOTE('%'));
 
