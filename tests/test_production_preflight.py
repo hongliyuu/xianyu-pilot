@@ -1,9 +1,15 @@
 import unittest
 
-from scripts.production_preflight import validate
+from scripts.production_preflight import _secret_file_permissions_are_safe, validate
 
 
 class ProductionPreflightTests(unittest.TestCase):
+    def test_secret_file_permissions_match_compose_mount_requirements(self) -> None:
+        self.assertTrue(_secret_file_permissions_are_safe(0o600, 0o755))
+        self.assertTrue(_secret_file_permissions_are_safe(0o644, 0o700))
+        self.assertFalse(_secret_file_permissions_are_safe(0o644, 0o755))
+        self.assertFalse(_secret_file_permissions_are_safe(0o664, 0o700))
+
     def test_missing_public_base_url_is_reported_as_warning(self) -> None:
         report = validate({})
 

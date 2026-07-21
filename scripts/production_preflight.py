@@ -165,9 +165,18 @@ def _read_secret_file(
     if stat_result.st_size > MAX_SECRET_FILE_BYTES:
         report.error(f"{field_name}_FILE", "exceeds the maximum permitted size")
         return None
-    if os.name != "nt" and stat.S_IMODE(stat_result.st_mode) & 0o077:
-        report.error(f"{field_name}_FILE", "must not grant group or other access")
-        return None
+    if os.name != "nt":
+        try:
+            directory_mode = candidate.parent.stat().st_mode
+        except OSError:
+            report.error(f"{field_name}_FILE", "parent directory must be readable")
+            return None
+        if not _secret_file_permissions_are_safe(stat_result.st_mode, directory_mode):
+            report.error(
+                f"{field_name}_FILE",
+                "must be owner-only, or read-only for group/others inside an owner-only directory",
+            )
+            return None
     try:
         raw = candidate.read_bytes()
         text = raw.decode("utf-8")
@@ -434,6 +443,14 @@ def validate(values: dict[str, str], env_path: Path | None = None) -> Validation
 def _looks_like_placeholder(value: str) -> bool:
     normalized = re.sub(r"[^a-z0-9-]", "", value.lower())
     return any(fragment in normalized for fragment in PLACEHOLDER_FRAGMENTS)
+
+
+def _secret_file_permissions_are_safe(file_mode: int, directory_mode: int) -> bool:
+    file_permissions = stat.S_IMODE(file_mode)
+    directory_permissions = stat.S_IMODE(directory_mode)
+    if file_permissions & 0o022:
+        return False
+    return not (file_permissions & 0o044 and directory_permissions & 0o077)
 
 
 def _csv(value: str) -> list[str]:

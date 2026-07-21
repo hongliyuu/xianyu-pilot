@@ -146,7 +146,10 @@ These are baseline controls, not a certification or warranty.
    (`chmod 600 .env` on Linux).
 2. Generate every required secret independently with a cryptographically secure
    generator. Use a bcrypt cost of at least 12 for `ADMIN_PASSWORD_HASH`. Never
-   store the plaintext administrator password in `.env`.
+   store the plaintext administrator password in `.env`. Keep `secrets/` at
+   mode `0700`; its files use mode `0644` because Compose bind-mounts them for
+   non-root containers. The protected parent directory prevents host users from
+   traversing to those files.
 3. Use separate non-root `MYSQL_APP_*` and `MYSQL_MIGRATION_*` identities with
    the documented grants. Do not reuse root, runtime, migration, Redis, JWT,
    cookie, internal API, provider, or bridge credentials.
