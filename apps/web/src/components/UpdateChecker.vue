@@ -112,7 +112,7 @@ const scriptTip = computed(() => '命令会切换代码、构建镜像、执行�
 
 const githubReleaseFallbackUrl = computed(() => {
   if (info.value.offlineBackup.releaseUrl) return info.value.offlineBackup.releaseUrl
-  return 'https://github.com/xianyu-assistant-opensource/xianyu-assistant-opensource/releases'
+  return 'https://github.com/hongliyuu/xian-yu-pilo/releases'
 })
 
 function formatDate(value) {

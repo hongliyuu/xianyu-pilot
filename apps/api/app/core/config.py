@@ -235,7 +235,7 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 10 * 1024 * 1024
     max_rag_document_bytes: int = 5 * 1024 * 1024
     # GitHub 仓库地址（owner/repo 格式），用于检查更新
-    github_repo: str = "xianyu-assistant-opensource/xianyu-assistant-opensource"
+    github_repo: str = "hongliyuu/xian-yu-pilo"
     # Only trust forwarded client IP headers when the direct socket peer is in
     # one of these comma-separated IPs/CIDRs.
     trusted_proxy_ips: str = ""

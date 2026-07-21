@@ -92,8 +92,8 @@
 
 1. **克隆仓库**
    ```bash
-   git clone https://github.com/xianyu-assistant-opensource/xianyu-assistant-opensource.git
-   cd xianyu-assistant-opensource
+   git clone https://github.com/hongliyuu/xian-yu-pilo.git
+   cd xian-yu-pilo
    ```
 
 2. **初始化、构建并启动**
@@ -147,7 +147,7 @@ ADMIN_PASSWORD="your-strong-password" ./deploy.sh init
 ## 📁 目录结构
 
 ```text
-xianyu-assistant-opensource/
+xian-yu-pilo/
 ├── apps/
 │   ├── api/        # FastAPI 后端、SQL migration、上传目录挂载点
 │   ├── crawler/    # Playwright 子服务，仅负责滑块求解

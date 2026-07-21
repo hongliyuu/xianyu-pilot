@@ -35,6 +35,7 @@
 - **账号鉴权工具增强**：accountAuth.js 新增 pickPreferredAccount（智能账号选择）、accountWsConnectionState（WS 三态）、resolveAccountAuthDisplayState（Cookie+WS 综合状态）、shouldAttemptAccountWebSocketStart
 
 ### 修复
+- **仓库与镜像地址修正**：克隆地址、版本检查、Release 链接和 GHCR 镜像命名空间统一指向 `hongliyuu/xian-yu-pilo`。
 - **docker-compose secrets 机制修复**：原 `secrets:` 顶层使用 `environment: ADMIN_PASSWORD_HASH` 模式期望主机环境变量为明文，但 `.env.example` 仅配置了 `_FILE` 路径变量，导致 `docker compose up` 时 secret 内容为空触发 fail-closed 启动失败；现统一改为 `file: ./secrets/<name>` 模式，与 `.env.example` 的 `_FILE` 路径完全对齐
 - **生产部署默认值修复**：`.env.example` 中 `AUDIT_MUTATION_INTENT_REQUIRED` 改为 `true`（生产预检强制要求），`WEB_BIND_ADDRESS` 改为 `0.0.0.0`（便于局域网访问，原 `127.0.0.1` 导致 VPS 部署后浏览器无法访问）
 - **订单同步结果判断 BUG**：syncCurrentOrder 此前忽略 data.ok 字段，同步失败时仍显示绿色成功提示；现改为基于 data.ok 分支显示成功或失败
@@ -44,9 +45,9 @@
 ## [v1.1.0] - 2026-07-15
 
 ### 新增
-- **Docker 镜像自动构建与发布**：每次推送到 `main` 分支时，GitHub Actions 自动构建 `api`/`web`/`crawler` 镜像并推送至 GHCR（`ghcr.io/xianyu-assistant-opensource/xianyu-assistant-{api,web,crawler}`），支持 `latest` 与 git 短 SHA 双标签
+- **Docker 镜像自动构建与发布**：每次推送到 `main` 分支时，GitHub Actions 自动构建 `api`/`web`/`crawler` 镜像并推送至 GHCR（`ghcr.io/hongliyuu/xianyu-assistant-{api,web,crawler}`），支持 `latest` 与 git 短 SHA 双标签
 - **一键拉取预构建镜像运行**：`docker compose pull && docker compose up -d`，无需本地源码构建
-- **镜像源可覆盖**：通过 `.env` 的 `IMAGE_NAMESPACE`/`API_IMAGE`/`WEB_IMAGE`/`CRAWLER_IMAGE` 切换命名空间或镜像源
+- **镜像源可覆盖**：通过 `.env` 的 `API_IMAGE`/`WEB_IMAGE`/`CRAWLER_IMAGE` 切换命名空间或镜像源
 - **更新日志机制**：新增 `CHANGELOG.md`，并落地为项目规则，每次上传追加版本记录
 
 ### 变更

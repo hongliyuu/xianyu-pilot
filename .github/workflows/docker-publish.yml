@@ -14,8 +14,8 @@ permissions:
 
 env:
   # 镜像命名空间，与 docker-compose.yml 中各服务的 image 默认值保持一致。
-  # 如需修改，同步更新 .env.example 的 IMAGE_NAMESPACE 与 docker-compose.yml。
-  IMAGE_NAMESPACE: xianyu-assistant-opensource
+  # 如需修改，同步更新 .env.example 的镜像变量与 docker-compose.yml。
+  IMAGE_NAMESPACE: hongliyuu
 
 jobs:
   build:
