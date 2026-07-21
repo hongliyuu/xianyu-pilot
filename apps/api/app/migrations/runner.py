@@ -12,7 +12,7 @@ from sqlalchemy import text
 logger = logging.getLogger(__name__)
 
 DEFAULT_MIGRATIONS_DIR = Path(__file__).resolve().parents[2] / "migrations"
-DEFAULT_LOCK_NAME = "xianyu_assistant_schema_migration"
+DEFAULT_LOCK_NAME = "xianyu_pilot_schema_migration"
 _MIGRATION_FILE = re.compile(
     r"^(?P<version>\d+)[_-](?P<description>[A-Za-z0-9][A-Za-z0-9_-]*)\.sql$",
     re.IGNORECASE,

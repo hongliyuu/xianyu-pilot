@@ -450,7 +450,7 @@ async def get_update_info(
     try:
         from importlib.metadata import PackageNotFoundError, version
         try:
-            current_version = version("xianyu-assistant")
+            current_version = version("xianyu-pilot")
         except PackageNotFoundError:
             pass
     except ImportError:

@@ -1,4 +1,4 @@
-name: xianyu-assistant
+name: xianyu-pilot
 
 x-service-defaults: &service-defaults
   restart: unless-stopped
@@ -96,7 +96,7 @@ services:
 
   crawler:
     <<: *service-defaults
-    image: ${CRAWLER_IMAGE:-ghcr.io/hongliyuu/xianyu-assistant-crawler:latest}
+    image: ${CRAWLER_IMAGE:-ghcr.io/hongliyuu/xianyu-pilot-crawler:latest}
     build:
       context: ./apps/crawler
     user: pwuser
@@ -149,7 +149,7 @@ services:
     <<: *service-defaults
     build:
       context: ./apps/api
-    image: ${API_IMAGE:-ghcr.io/hongliyuu/xianyu-assistant-api:latest}
+    image: ${API_IMAGE:-ghcr.io/hongliyuu/xianyu-pilot-api:latest}
     command: ["python", "-m", "app.migrations", "upgrade"]
     restart: "no"
     user: "10001:10001"
@@ -219,7 +219,7 @@ services:
     <<: *service-defaults
     build:
       context: ./apps/api
-    image: ${API_IMAGE:-ghcr.io/hongliyuu/xianyu-assistant-api:latest}
+    image: ${API_IMAGE:-ghcr.io/hongliyuu/xianyu-pilot-api:latest}
     user: "10001:10001"
     read_only: true
     cap_drop:
@@ -241,8 +241,8 @@ services:
       JWT_SECRET_FILE: /run/secrets/jwt_secret
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-43200000}
       JWT_ALGORITHM: HS256
-      JWT_ISSUER: ${JWT_ISSUER:-xianyu-assistant-api}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-xianyu-assistant-web}
+      JWT_ISSUER: ${JWT_ISSUER:-xianyu-pilot-api}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-xianyu-pilot-web}
       COOKIE_CRYPTO_SECRET_FILE: /run/secrets/cookie_crypto_secret
       INTERNAL_API_TOKEN_FILE: /run/secrets/internal_api_token
       CRAWLER_BASE_URL: http://crawler:12402
@@ -395,7 +395,7 @@ services:
 
   web:
     <<: *service-defaults
-    image: ${WEB_IMAGE:-ghcr.io/hongliyuu/xianyu-assistant-web:latest}
+    image: ${WEB_IMAGE:-ghcr.io/hongliyuu/xianyu-pilot-web:latest}
     build:
       context: ./apps/web
     user: nginx

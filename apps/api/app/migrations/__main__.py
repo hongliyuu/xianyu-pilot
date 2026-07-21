@@ -61,7 +61,7 @@ async def _run(command: str) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="python -m app.migrations",
-        description="Inspect or apply Xianyu Assistant database migrations",
+        description="Inspect or apply Xianyu Pilot database migrations",
     )
     parser.add_argument("command", choices=("upgrade", "status"))
     args = parser.parse_args()

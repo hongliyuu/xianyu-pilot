@@ -10,13 +10,15 @@
 
 ### 变更
 
+- **项目命名统一**：仓库、Compose 资源、数据库、服务标识、本地镜像和 GHCR 镜像统一使用 `xianyu-pilot` 名称。
 - **MySQL 账号模型精简**：删除自定义双账号初始化脚本和迁移专用凭据，改由官方镜像创建单一非 root app 用户，供 API、Worker 和迁移共用；root 仅用于初始化和恢复。
 - **Linux 生产入口收敛**：删除 Windows 生产启动、初始化和验证入口，生产部署统一使用 Shell 脚本；本地开发入口留待后续阶段单独整理。
 - **容器端口统一**：生产 Web、API、Crawler 使用连续的 `12400`、`12401`、`12402`，Web 宿主机与容器端口保持一致且默认仅绑定回环地址。
 - **首次密码加固**：移除 `admin123` 默认密码，首次初始化改为生成并仅显示一次随机管理员密码，已有密码哈希时不再输出误导性密码。
 
 ### 新增
-- **统一生产部署入口**：`deploy.sh` 提供 `init`、`up`、`status`、`logs`、`check-update`、`update` 和 `stop` 子命令，`up` 自动构建 Git SHA 镜像；`update` 始终更新到最新正式版本且不自动备份或回滚。
+- **项目级一键卸载**：新增 `./deploy.sh uninstall`，二次确认后删除本项目运行资源、数据、项目镜像和生成配置，同时保留源码与共享基础镜像。
+- **统一生产部署入口**：`deploy.sh` 提供 `init`、`up`、`status`、`logs`、`check-update`、`update`、`stop` 和 `uninstall` 子命令，`up` 自动构建 Git SHA 镜像；`update` 始终更新到最新正式版本且不自动备份或回滚。
 - **首次初始化脚本**：新增 `scripts/init.sh`，首次启动自动生成 6 组随机 secrets（MySQL root/app、Redis、JWT、Cookie、Token，均 Base64URL 编码 ≥32 字符）、4 个空的可选 secrets、bcrypt cost 12 admin 密码 hash 和 `.env` 文件；优先用主机 Python，缺失时自动退到 Docker 临时容器生成
 - **小刀订单免拼发货**：小刀（砍价）订单自动调用闲鱼免拼发货接口（mtop.idle.groupon.activity.seller.freeshipping）完成发货，而非普通确认发货接口；订单同步时通过 btnList 的 SKIP_PIN 自动检测小刀订单并标记 is_bargain（只置 True 不回退）；自动发货网关根据订单小刀状态智能路由免拼/确认发货接口
 - **发布商品页面增强**：运费设置支持包邮/一口价/无需邮寄三模式互斥切换；图片 URL 增加 resolveTrustedMediaUrl 白名单防护（防 XSS）；图片上传增加 imageUploadValidationMessage 预校验（大小≤5MB、MIME 类型、扩展名）；账号选择增加 pickPreferredAccount 智能选择（优先可用账号）
@@ -38,7 +40,7 @@
 ### 修复
 - **生产密钥权限校验修复**：预检现在允许 Compose 所需的 `secrets/` 目录 `0700`、文件 `0644` 组合，同时继续拒绝公开目录或可被其他用户写入的密钥文件。
 - **生产预检警告修复**：修正未配置 `PUBLIC_BASE_URL` 时调用错误方法导致 `./deploy.sh up` 中断的问题。
-- **仓库与镜像地址修正**：克隆地址、版本检查、Release 链接和 GHCR 镜像命名空间统一指向 `hongliyuu/xian-yu-pilo`。
+- **仓库与镜像地址修正**：克隆地址、版本检查、Release 链接和 GHCR 镜像命名空间统一指向 `hongliyuu/xianyu-pilot`。
 - **docker-compose secrets 机制修复**：原 `secrets:` 顶层使用 `environment: ADMIN_PASSWORD_HASH` 模式期望主机环境变量为明文，但 `.env.example` 仅配置了 `_FILE` 路径变量，导致 `docker compose up` 时 secret 内容为空触发 fail-closed 启动失败；现统一改为 `file: ./secrets/<name>` 模式，与 `.env.example` 的 `_FILE` 路径完全对齐
 - **生产部署默认值修复**：`.env.example` 中 `AUDIT_MUTATION_INTENT_REQUIRED` 改为 `true`（生产预检强制要求），`WEB_BIND_ADDRESS` 改为 `0.0.0.0`（便于局域网访问，原 `127.0.0.1` 导致 VPS 部署后浏览器无法访问）
 - **订单同步结果判断 BUG**：syncCurrentOrder 此前忽略 data.ok 字段，同步失败时仍显示绿色成功提示；现改为基于 data.ok 分支显示成功或失败
@@ -48,7 +50,7 @@
 ## [v1.1.0] - 2026-07-15
 
 ### 新增
-- **Docker 镜像自动构建与发布**：每次推送到 `main` 分支时，GitHub Actions 自动构建 `api`/`web`/`crawler` 镜像并推送至 GHCR（`ghcr.io/hongliyuu/xianyu-assistant-{api,web,crawler}`），支持 `latest` 与 git 短 SHA 双标签
+- **Docker 镜像自动构建与发布**：每次推送到 `main` 分支时，GitHub Actions 自动构建 `api`/`web`/`crawler` 镜像并推送至 GHCR（`ghcr.io/hongliyuu/xianyu-pilot-{api,web,crawler}`），支持 `latest` 与 git 短 SHA 双标签
 - **一键拉取预构建镜像运行**：`docker compose pull && docker compose up -d`，无需本地源码构建
 - **镜像源可覆盖**：通过 `.env` 的 `API_IMAGE`/`WEB_IMAGE`/`CRAWLER_IMAGE` 切换命名空间或镜像源
 - **更新日志机制**：新增 `CHANGELOG.md`，并落地为项目规则，每次上传追加版本记录

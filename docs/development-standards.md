@@ -93,7 +93,9 @@ npm --prefix apps/crawler run build
   `docker-compose.yml` 中同时声明对应的 `image` 与 `build`。
 - 修改镜像命名空间时，同一变更中更新工作流 `IMAGE_NAMESPACE`、Compose 镜像默认值和
   `.env.example` 的镜像变量。
-- 生产初始化、启动、检查更新、更新和停止统一使用 `deploy.sh` 子命令；镜像构建由 `up` 自动完成。
+- 生产初始化、启动、检查更新、更新、停止和卸载统一使用 `deploy.sh` 子命令；镜像构建由 `up` 自动完成。
+- `uninstall` 只能删除 Compose 标签精确匹配本项目的资源和明确列出的项目镜像，不得调用
+  `docker system prune` 或删除共享基础镜像；必须交互确认后才能删除数据与生成配置。
 
 ## 文档维护
 

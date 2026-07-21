@@ -106,7 +106,7 @@ async def _fetch_latest_release(repo: str) -> Optional[dict[str, Any]]:
     url = f"{GITHUB_API_BASE}/repos/{repo}/releases/latest"
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "xian-yu-pilo/update-checker",
+        "User-Agent": "xianyu-pilot/update-checker",
     }
     try:
         async with httpx.AsyncClient(timeout=GITHUB_TIMEOUT_SECONDS) as client:

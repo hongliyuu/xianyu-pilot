@@ -34,13 +34,13 @@ OPTIONAL_FILE_BACKED_SECRET_FIELDS = (
 
 
 class Settings(BaseSettings):
-    app_name: str = "xianyu-assistant-python"
+    app_name: str = "xianyu-pilot-api"
     server_host: str = "127.0.0.1"
     # Isolated local default. Production Compose explicitly overrides this
     # with its private, unpublished container port (12401).
     server_port: int = 15177
 
-    db_path: str = "../dbdata/xianyu_assistant.db"  # kept for backward compat
+    db_path: str = "../dbdata/xianyu_pilot.db"
     uploads_dir: str = str(DEFAULT_UPLOADS_DIR)
 
     # MySQL 配置（替换 SQLite）
@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     mysql_user: str = "xianyu"
     mysql_password: str = Field(default="xianyu_pass", exclude=True, repr=False)
     mysql_password_file: str = Field(default="", exclude=True, repr=False)
-    mysql_database: str = "xianyu_assistant_admin"
+    mysql_database: str = "xianyu_pilot"
     mysql_connect_timeout_seconds: int = 10
     mysql_read_timeout_seconds: int = 30
     mysql_write_timeout_seconds: int = 30
@@ -139,7 +139,7 @@ class Settings(BaseSettings):
         return value.resolve()
 
     jwt_secret: str = Field(
-        default="xianyu-assistant-jwt-secret-key-2026-04-22-very-long-secret-for-hmac-sha",
+        default="xianyu-pilot-jwt-secret-key-2026-04-22-very-long-secret-for-hmac-sha",
         exclude=True,
         repr=False,
     )
@@ -148,8 +148,8 @@ class Settings(BaseSettings):
     # impact of browser/storage compromise.
     jwt_expiration_ms: int = 43_200_000
     jwt_algorithm: str = "HS256"
-    jwt_issuer: str = "xianyu-assistant-api"
-    jwt_audience: str = "xianyu-assistant-web"
+    jwt_issuer: str = "xianyu-pilot-api"
+    jwt_audience: str = "xianyu-pilot-web"
     cookie_crypto_secret: str = Field(
         default="dev-only-cookie-crypto-secret-change-me-32-chars",
         exclude=True,
@@ -213,7 +213,7 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 10 * 1024 * 1024
     max_rag_document_bytes: int = 5 * 1024 * 1024
     # GitHub 仓库地址（owner/repo 格式），用于检查更新
-    github_repo: str = "hongliyuu/xian-yu-pilo"
+    github_repo: str = "hongliyuu/xianyu-pilot"
     # Only trust forwarded client IP headers when the direct socket peer is in
     # one of these comma-separated IPs/CIDRs.
     trusted_proxy_ips: str = ""
@@ -322,7 +322,7 @@ class Settings(BaseSettings):
                 "please-change-this-to-a-random-32-char-string",
                 "dev-only-internal-api-token-change-me-32-chars",
                 "dev-only-cookie-crypto-secret-change-me-32-chars",
-                "xianyu-assistant-jwt-secret-key-2026-04-22-very-long-secret-for-hmac-sha",
+                "xianyu-pilot-jwt-secret-key-2026-04-22-very-long-secret-for-hmac-sha",
             }
             for field_name, value in {
                 "JWT_SECRET": self.jwt_secret,

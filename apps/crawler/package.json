@@ -1,8 +1,8 @@
 {
-  "name": "xianyu-crawler",
+  "name": "xianyu-pilot-crawler",
   "version": "1.0.0",
   "private": true,
-  "description": "Playwright solver service for Xianyu Assistant",
+  "description": "Playwright solver service for Xianyu Pilot",
   "main": "dist/server.js",
   "type": "module",
   "engines": {

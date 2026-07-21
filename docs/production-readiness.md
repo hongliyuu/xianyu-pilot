@@ -173,6 +173,10 @@ These are baseline controls, not a certification or warranty.
 执行迁移、启动服务并检查 Web 就绪状态。运维和更新必须使用 `deploy.sh` 对应子命令，不直接执行组合式 Git 或
 Compose 命令。更新流程不提供自动备份或应用版本回滚。
 
+`./deploy.sh uninstall` 是不可逆的项目级卸载入口。它要求输入 `xianyu-pilot` 二次确认，
+删除本项目容器、隔离网络、数据卷、项目镜像和生成配置，但不执行 Docker 全局清理，
+不删除共享的 MySQL/Redis 基础镜像或源码仓库。生产数据需要保留时不得执行该命令。
+
 After startup, validate through the TLS endpoint—not just localhost—and confirm:
 
 - unauthenticated protected API calls fail;

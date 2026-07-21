@@ -8,7 +8,7 @@ ENV_FILE="$PROJECT_DIR/.env"
 STATE_DIR="$PROJECT_DIR/.deploy"
 CURRENT_FILE="$STATE_DIR/current"
 CANDIDATE_FILE="$STATE_DIR/candidate"
-PROJECT_NAME="xianyu-assistant"
+PROJECT_NAME="xianyu-pilot"
 DEPLOY_REMOTE=${DEPLOY_REMOTE:-origin}
 DEPLOY_BRANCH=${DEPLOY_BRANCH:-main}
 WAIT_TIMEOUT_SECONDS=${WAIT_TIMEOUT_SECONDS:-300}
@@ -30,6 +30,7 @@ show_help() {
   check-update            检查远端正式版本
   update                  更新到最新正式版本
   stop                    停止服务，不删除数据卷和镜像
+  uninstall               卸载本项目并删除数据、镜像和生成配置
 
 服务名：mysql redis migrate api worker crawler web
 EOF
@@ -97,9 +98,9 @@ validate_version_id() {
 export_release_images() {
   release=$1
   validate_version_id "$release"
-  export API_IMAGE="xianyu-assistant-api:$release"
-  export WEB_IMAGE="xianyu-assistant-web:$release"
-  export CRAWLER_IMAGE="xianyu-assistant-crawler:$release"
+  export API_IMAGE="xianyu-pilot-api:$release"
+  export WEB_IMAGE="xianyu-pilot-web:$release"
+  export CRAWLER_IMAGE="xianyu-pilot-crawler:$release"
 }
 
 read_state() {
@@ -301,6 +302,54 @@ command_stop() {
   ok "服务已停止；数据卷和镜像均已保留"
 }
 
+remove_compose_resources() {
+  project=$1
+  for container in $(docker ps -aq --filter "label=com.docker.compose.project=$project"); do
+    docker rm --force "$container"
+  done
+  for network in $(docker network ls -q --filter "label=com.docker.compose.project=$project"); do
+    docker network rm "$network"
+  done
+  for volume in $(docker volume ls -q --filter "label=com.docker.compose.project=$project"); do
+    docker volume rm "$volume"
+  done
+}
+
+remove_project_images() {
+  repositories="
+xianyu-pilot-api
+xianyu-pilot-web
+xianyu-pilot-crawler
+ghcr.io/hongliyuu/xianyu-pilot-api
+ghcr.io/hongliyuu/xianyu-pilot-web
+ghcr.io/hongliyuu/xianyu-pilot-crawler
+"
+  for repository in $repositories; do
+    for image in $(docker image ls --filter "reference=$repository:*" --format '{{.Repository}}:{{.Tag}}'); do
+      docker image rm --force "$image"
+    done
+  done
+}
+
+command_uninstall() {
+  require_linux
+  require_docker
+  [ -n "$PROJECT_DIR" ] && [ "$PROJECT_DIR" != "/" ] || die "拒绝在无效项目目录执行卸载"
+
+  warn "将永久删除本项目的容器、网络、数据卷、项目镜像、.env、secrets/ 和 .deploy/。"
+  warn "MySQL/Redis 基础镜像、Docker 全局缓存和源码仓库不会删除。"
+  [ -t 0 ] || die "uninstall 必须在交互式终端中执行"
+  printf '请输入 %s 确认卸载：' "$PROJECT_NAME"
+  IFS= read -r confirmation || die "未读取到卸载确认"
+  [ "$confirmation" = "$PROJECT_NAME" ] || die "确认内容不匹配，已取消卸载"
+
+  remove_compose_resources "$PROJECT_NAME"
+  remove_project_images
+  rm -rf "$STATE_DIR" "$PROJECT_DIR/secrets"
+  rm -f "$ENV_FILE"
+  ok "卸载完成；源码仓库和共享基础镜像已保留"
+}
+
 command=${1:-help}
 [ "$#" -eq 0 ] || shift
 case "$command" in
@@ -312,5 +361,6 @@ case "$command" in
   check-update) [ "$#" -eq 0 ] || die "check-update 不接受参数"; command_check_update ;;
   update) command_update "$@" ;;
   stop) [ "$#" -eq 0 ] || die "stop 不接受参数"; command_stop ;;
+  uninstall) [ "$#" -eq 0 ] || die "uninstall 不接受参数"; command_uninstall ;;
   *) die "未知命令：$command；执行 ./deploy.sh help 查看用法" ;;
 esac
