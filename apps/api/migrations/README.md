@@ -16,13 +16,13 @@ python -m app.migrations upgrade
 python -m app.migrations status
 ```
 
-`Settings` resolves `MYSQL_APP_USER/MYSQL_APP_PASSWORD` for every runtime API
-and Worker connection, while this CLI resolves
-`MYSQL_MIGRATION_USER/MYSQL_MIGRATION_PASSWORD`. The legacy
-`MYSQL_USER/MYSQL_PASSWORD` pair remains a development/backward-compatibility
-fallback only. Do not populate only one field in a role pair, and never reuse a
-runtime, migration, or root credential. SQLAlchemy URL rendering masks passwords;
-operators must still avoid printing the resolved environment or Compose model.
+`Settings` resolves `MYSQL_USER/MYSQL_PASSWORD` for API, Worker, and migration
+connections. Production Compose maps the managed `MYSQL_APP_USER` and
+`MYSQL_APP_PASSWORD_FILE` values to that common application connection. The
+application identity has full privileges only on `MYSQL_DATABASE`; the root
+credential remains reserved for initialization and recovery. SQLAlchemy URL
+rendering masks passwords, but operators must still avoid printing the resolved
+environment or Compose model.
 
 `status` exits `0` only when the schema is current and exits `3` for a pending
 or unknown version. `upgrade` discovers every `<number>_<description>.sql` file,
@@ -181,27 +181,25 @@ docker compose run --rm migrate python -m app.migrations status
 docker compose up -d api worker
 ```
 
-On a brand-new MySQL data volume, the mounted
-`deploy/mysql/init/010-least-privilege-users.sh` provisions two accounts without
-placing passwords in process arguments: the runtime account receives only
-`SELECT`, `INSERT`, `UPDATE`, and `DELETE` on `MYSQL_DATABASE`; the migration
-account receives database-scoped privileges needed by the numbered migrations,
-without `GRANT OPTION`. The script revokes pre-existing grants before applying
-that allowlist and rejects shared/reserved identities and reused credentials.
+On a brand-new MySQL data volume, the official image creates the non-root
+application identity from `MYSQL_USER` and `MYSQL_PASSWORD_FILE`. It receives
+database-scoped privileges on `MYSQL_DATABASE`, which are used both by the
+application and the one-shot migration service. The root credential is not
+mounted into API, Worker, or migration containers.
 
-MySQL entrypoint initialization does not rerun on an existing data volume. Before
-upgrading an older installation, a database administrator must execute the same
-reviewed revoke/grant policy over a local socket, verify it with `SHOW GRANTS`,
-then rotate the managed secrets and run preflight. Recreating only the container
-does not provision or rotate accounts. Never delete a production volume merely
-to trigger initialization.
+MySQL entrypoint initialization does not rerun on an existing data volume.
+Existing installations that used a separate restricted runtime identity must
+grant their application identity database-scoped schema privileges before using
+it for migrations. Verify the result with `SHOW GRANTS`; recreating only the
+container does not provision or rotate accounts. Never delete a production
+volume merely to trigger initialization.
 
 Example logical backup without putting a password in the host process arguments:
 
 ```bash
 umask 077
 docker compose exec -T mysql sh -ec '
-  export MYSQL_PWD="$MYSQL_ROOT_PASSWORD"
+  export MYSQL_PWD="$(cat "$MYSQL_ROOT_PASSWORD_FILE")"
   exec mysqldump --protocol=socket -uroot --single-transaction \
     --routines --events --triggers "$MYSQL_DATABASE"
 ' > "backup-$(date +%Y%m%d-%H%M%S).sql"

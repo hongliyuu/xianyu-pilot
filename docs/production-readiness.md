@@ -150,9 +150,10 @@ These are baseline controls, not a certification or warranty.
    mode `0700`; its files use mode `0644` because Compose bind-mounts them for
    non-root containers. The protected parent directory prevents host users from
    traversing to those files.
-3. Use separate non-root `MYSQL_APP_*` and `MYSQL_MIGRATION_*` identities with
-   the documented grants. Do not reuse root, runtime, migration, Redis, JWT,
-   cookie, internal API, provider, or bridge credentials.
+3. Use the dedicated non-root `MYSQL_APP_*` identity for API, Worker, and the
+   one-shot migration service. It may manage only `MYSQL_DATABASE`; reserve the
+   root credential for initialization and recovery. Do not reuse database,
+   Redis, JWT, cookie, internal API, provider, or bridge credentials.
 4. Add the real hostname to `TRUSTED_HOSTS`. Keep `CORS_ALLOWED_ORIGINS` empty for
    same-origin traffic or provide only exact HTTPS origins.
 5. Leave the commercial bridge and AI/provider settings blank unless their URLs,
@@ -239,12 +240,12 @@ After startup, validate through the TLS endpoint—not just localhost—and conf
   step. The Compose `migrate` job is the only service authorized to issue schema
   DDL; API and Worker startup only check for pending/unknown versions and fail
   closed.
-- Keep three unique MySQL credentials: root for initialization/recovery,
-  `MYSQL_MIGRATION_*` for the one-shot schema runner, and `MYSQL_APP_*` for
-  API/Worker DML. Capture `SHOW GRANTS` evidence proving the runtime identity has
-  only `SELECT/INSERT/UPDATE/DELETE` and no schema/global/grant-option privilege.
-  The entrypoint provisioning script runs only for a new data volume; existing
-  installations require an explicit reviewed grant migration and secret rotation.
+- Keep two unique MySQL credentials: root for initialization/recovery and
+  `MYSQL_APP_*` for API, Worker, and the one-shot schema runner. Capture
+  `SHOW GRANTS` evidence proving the application identity has privileges only on
+  `MYSQL_DATABASE` and no global or grant-option privilege. Official image
+  account provisioning runs only for a new data volume; existing installations
+  require an explicit reviewed grant update when consolidating old accounts.
 - Before every upgrade, stop external automation/writers, take a verified
   encrypted backup, review each newly numbered SQL file, and record the before/
   after output of `python -m app.migrations status`. Credentials must come from

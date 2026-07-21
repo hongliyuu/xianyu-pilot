@@ -22,7 +22,6 @@ from urllib.parse import urlparse
 SECRET_FIELDS = (
     "MYSQL_ROOT_PASSWORD",
     "MYSQL_APP_PASSWORD",
-    "MYSQL_MIGRATION_PASSWORD",
     "REDIS_PASSWORD",
     "JWT_SECRET",
     "COOKIE_CRYPTO_SECRET",
@@ -217,29 +216,18 @@ def validate(values: dict[str, str], env_path: Path | None = None) -> Validation
     database = values.get("MYSQL_DATABASE", "").strip()
     if not re.fullmatch(r"[A-Za-z0-9_]{1,64}", database):
         report.error("MYSQL_DATABASE", "must be a 1-64 character SQL identifier")
-    database_users: dict[str, str] = {}
-    for key in ("MYSQL_APP_USER", "MYSQL_MIGRATION_USER"):
-        database_user = values.get(key, "").strip()
-        database_users[key] = database_user
-        if not re.fullmatch(r"[A-Za-z0-9_]{1,32}", database_user):
-            report.error(key, "must be a 1-32 character SQL identifier")
-        elif database_user.lower() in {"root", "mysql", "admin"}:
-            report.error(key, "must be a dedicated non-administrative database user")
-    if (
-        database_users["MYSQL_APP_USER"]
-        and database_users["MYSQL_MIGRATION_USER"]
-        and database_users["MYSQL_APP_USER"].casefold()
-        == database_users["MYSQL_MIGRATION_USER"].casefold()
-    ):
+    database_user = values.get("MYSQL_APP_USER", "").strip()
+    if not re.fullmatch(r"[A-Za-z0-9_]{1,32}", database_user):
+        report.error("MYSQL_APP_USER", "must be a 1-32 character SQL identifier")
+    elif database_user.lower() in {"root", "mysql", "admin"}:
         report.error(
-            "MYSQL_DATABASE_USERS",
-            "runtime and migration identities must be different",
+            "MYSQL_APP_USER",
+            "must be a dedicated non-administrative database user",
         )
 
     minimum_lengths = {
         "MYSQL_ROOT_PASSWORD": 16,
         "MYSQL_APP_PASSWORD": 16,
-        "MYSQL_MIGRATION_PASSWORD": 16,
         "REDIS_PASSWORD": 16,
         "JWT_SECRET": 32,
         "COOKIE_CRYPTO_SECRET": 32,
@@ -265,16 +253,6 @@ def validate(values: dict[str, str], env_path: Path | None = None) -> Validation
     populated_secrets = [values.get(key, "").strip() for key in SECRET_FIELDS]
     if len([value for value in populated_secrets if value]) != len(set(value for value in populated_secrets if value)):
         report.error("SECRETS", "every database, Redis, JWT, cookie, and internal token secret must be unique")
-    if (
-        values.get("MYSQL_APP_PASSWORD", "").strip()
-        and values.get("MYSQL_APP_PASSWORD", "").strip()
-        == values.get("MYSQL_MIGRATION_PASSWORD", "").strip()
-    ):
-        report.error(
-            "MYSQL_DATABASE_PASSWORDS",
-            "runtime and migration credentials must be different",
-        )
-
     _validate_integer(values, report, "JWT_EXPIRATION_MS", 300_000, 86_400_000)
     _validate_integer(values, report, "LOGIN_MAX_ATTEMPTS", 1, 100)
     _validate_integer(values, report, "LOGIN_LOCK_MINUTES", 1, 1_440)

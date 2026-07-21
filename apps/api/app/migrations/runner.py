@@ -623,7 +623,7 @@ async def upgrade_schema() -> UpgradeResult:
     from app.core.config import settings
     from app.core.database import create_configured_engine
 
-    migration_engine = create_configured_engine(settings.mysql_migration_url)
+    migration_engine = create_configured_engine(settings.mysql_runtime_url)
     try:
         return await MigrationRunner(migration_engine).upgrade()
     finally:

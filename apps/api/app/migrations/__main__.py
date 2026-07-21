@@ -20,7 +20,7 @@ async def _run(command: str) -> int:
     from app.core.config import settings
     from app.core.database import create_configured_engine
 
-    engine = create_configured_engine(settings.mysql_migration_url)
+    engine = create_configured_engine(settings.mysql_runtime_url)
     runner = MigrationRunner(engine)
     try:
         if command == "upgrade":

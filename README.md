@@ -152,7 +152,6 @@ xian-yu-pilo/
 │   ├── api/        # FastAPI 后端、SQL migration、上传目录挂载点
 │   ├── crawler/    # Playwright 子服务，仅负责滑块求解
 │   └── web/        # 合并后的 Vue 前端
-├── deploy/         # MySQL 初始化脚本
 ├── docs/           # 开发、生产准入与迁移文档
 ├── scripts/        # 生产运维与本地开发脚本
 ├── screenshots/    # README 截图

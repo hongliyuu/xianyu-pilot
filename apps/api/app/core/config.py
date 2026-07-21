@@ -15,8 +15,6 @@ ROOT_ENV_FILE = ROOT_DIR / ".env"
 DEFAULT_UPLOADS_DIR = (API_DIR.parent / "uploads" if MONOREPO_LAYOUT else API_DIR / "uploads").resolve()
 FILE_BACKED_SECRET_FIELDS = (
     "mysql_password",
-    "mysql_app_password",
-    "mysql_migration_password",
     "internal_api_token",
     "amap_api_key",
     "commercial_backend_access_token",
@@ -51,14 +49,6 @@ class Settings(BaseSettings):
     mysql_user: str = "xianyu"
     mysql_password: str = Field(default="xianyu_pass", exclude=True, repr=False)
     mysql_password_file: str = Field(default="", exclude=True, repr=False)
-    # Role-specific production credentials. Empty values preserve the legacy
-    # MYSQL_USER/MYSQL_PASSWORD contract for development and older deployments.
-    mysql_app_user: str = ""
-    mysql_app_password: str = Field(default="", exclude=True, repr=False)
-    mysql_app_password_file: str = Field(default="", exclude=True, repr=False)
-    mysql_migration_user: str = ""
-    mysql_migration_password: str = Field(default="", exclude=True, repr=False)
-    mysql_migration_password_file: str = Field(default="", exclude=True, repr=False)
     mysql_database: str = "xianyu_assistant_admin"
     mysql_connect_timeout_seconds: int = 10
     mysql_read_timeout_seconds: int = 30
@@ -119,20 +109,8 @@ class Settings(BaseSettings):
     def mysql_runtime_url(self) -> URL:
         return URL.create(
             drivername="mysql+aiomysql",
-            username=(self.mysql_app_user or self.mysql_user),
-            password=(self.mysql_app_password or self.mysql_password),
-            host=self.mysql_host,
-            port=self.mysql_port,
-            database=self.mysql_database,
-            query={"charset": "utf8mb4"},
-        )
-
-    @property
-    def mysql_migration_url(self) -> URL:
-        return URL.create(
-            drivername="mysql+aiomysql",
-            username=(self.mysql_migration_user or self.mysql_user),
-            password=(self.mysql_migration_password or self.mysql_password),
+            username=self.mysql_user,
+            password=self.mysql_password,
             host=self.mysql_host,
             port=self.mysql_port,
             database=self.mysql_database,
@@ -141,7 +119,7 @@ class Settings(BaseSettings):
 
     @property
     def mysql_url(self) -> URL:
-        """Backward-compatible alias for the runtime, never migration, URL."""
+        """Backward-compatible alias for the application database URL."""
 
         return self.mysql_runtime_url
 
@@ -258,18 +236,6 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_security_defaults(self):
-        for role, user, password in (
-            ("MYSQL_APP", self.mysql_app_user, self.mysql_app_password),
-            ("MYSQL_MIGRATION", self.mysql_migration_user, self.mysql_migration_password),
-        ):
-            if bool((user or "").strip()) != bool(password):
-                raise ValueError(f"{role}_USER and {role}_PASSWORD must be configured together")
-        if self.mysql_app_user and self.mysql_migration_user:
-            if self.mysql_app_user.casefold() == self.mysql_migration_user.casefold():
-                raise ValueError("MYSQL_APP_USER and MYSQL_MIGRATION_USER must be different")
-        if self.mysql_app_password and self.mysql_migration_password:
-            if self.mysql_app_password == self.mysql_migration_password:
-                raise ValueError("MYSQL_APP_PASSWORD and MYSQL_MIGRATION_PASSWORD must be different")
         if self.jwt_algorithm not in {"HS256", "HS384", "HS512"}:
             raise ValueError("JWT_ALGORITHM must be one of HS256/HS384/HS512")
         if not 300_000 <= self.jwt_expiration_ms <= 86_400_000:
@@ -372,19 +338,20 @@ class Settings(BaseSettings):
                 raise ValueError("ADMIN_PASSWORD_HASH must be a bcrypt hash in prod/staging")
             if not (self.redis_password or "").strip():
                 raise ValueError("REDIS_PASSWORD must be configured in prod/staging")
-            for role, url in (
-                ("MYSQL runtime", self.mysql_runtime_url),
-                ("MYSQL migration", self.mysql_migration_url),
-            ):
-                mysql_password = (url.password or "").strip()
-                if len(mysql_password) < 16 or mysql_password in {
-                    "xianyu_pass",
-                    "password",
-                    "root",
-                }:
-                    raise ValueError(f"{role} password must be strong in prod/staging")
-                if (url.username or "").strip().casefold() in {"", "root", "mysql", "admin"}:
-                    raise ValueError(f"{role} user must be a dedicated non-root account")
+            mysql_password = (self.mysql_runtime_url.password or "").strip()
+            if len(mysql_password) < 16 or mysql_password in {
+                "xianyu_pass",
+                "password",
+                "root",
+            }:
+                raise ValueError("MYSQL password must be strong in prod/staging")
+            if (self.mysql_runtime_url.username or "").strip().casefold() in {
+                "",
+                "root",
+                "mysql",
+                "admin",
+            }:
+                raise ValueError("MYSQL user must be a dedicated non-root account")
             if self.commercial_backend_access_token and len(self.commercial_backend_access_token.strip()) < 32:
                 raise ValueError("COMMERCIAL_BACKEND_ACCESS_TOKEN must be at least 32 chars")
             if not self.trusted_hosts_list or "*" in self.trusted_hosts_list:

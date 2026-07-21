@@ -57,7 +57,7 @@ require_git() {
 require_initialized() {
   [ -f "$ENV_FILE" ] || die "尚未初始化，请先执行 ./deploy.sh init"
   for name in admin-password-hash mysql-root-password mysql-app-password \
-    mysql-migration-password redis-password jwt-secret cookie-crypto-secret internal-api-token; do
+    redis-password jwt-secret cookie-crypto-secret internal-api-token; do
     [ -s "$PROJECT_DIR/secrets/$name" ] || die "缺少密钥 secrets/$name，请重新执行 ./deploy.sh init"
   done
 }

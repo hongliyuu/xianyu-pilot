@@ -4,6 +4,14 @@ from scripts.production_preflight import _secret_file_permissions_are_safe, vali
 
 
 class ProductionPreflightTests(unittest.TestCase):
+    def test_root_is_rejected_as_application_database_user(self) -> None:
+        report = validate({"MYSQL_APP_USER": "root"})
+
+        self.assertIn(
+            "MYSQL_APP_USER: must be a dedicated non-administrative database user",
+            report.errors,
+        )
+
     def test_secret_file_permissions_match_compose_mount_requirements(self) -> None:
         self.assertTrue(_secret_file_permissions_are_safe(0o600, 0o755))
         self.assertTrue(_secret_file_permissions_are_safe(0o644, 0o700))

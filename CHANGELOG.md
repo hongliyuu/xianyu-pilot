@@ -10,13 +10,14 @@
 
 ### 变更
 
+- **MySQL 账号模型精简**：删除自定义双账号初始化脚本和迁移专用凭据，改由官方镜像创建单一非 root app 用户，供 API、Worker 和迁移共用；root 仅用于初始化和恢复。
 - **Linux 生产入口收敛**：删除 Windows 生产启动、初始化和验证入口，生产部署统一使用 Shell 脚本；本地开发入口留待后续阶段单独整理。
 - **容器端口统一**：生产 Web、API、Crawler 使用连续的 `12400`、`12401`、`12402`，Web 宿主机与容器端口保持一致且默认仅绑定回环地址。
 - **首次密码加固**：移除 `admin123` 默认密码，首次初始化改为生成并仅显示一次随机管理员密码，已有密码哈希时不再输出误导性密码。
 
 ### 新增
 - **统一生产部署入口**：`deploy.sh` 提供 `init`、`up`、`status`、`logs`、`check-update`、`update` 和 `stop` 子命令，`up` 自动构建 Git SHA 镜像；`update` 始终更新到最新正式版本且不自动备份或回滚。
-- **首次初始化脚本**：新增 `scripts/init.sh`，首次启动自动生成 7 组随机 secrets（MySQL root/app/migration 三组、Redis、JWT、Cookie、Token，均 Base64URL 编码 ≥32 字符）、4 个空的可选 secrets、bcrypt cost 12 admin 密码 hash 和 `.env` 文件；优先用主机 Python，缺失时自动退到 Docker 临时容器生成
+- **首次初始化脚本**：新增 `scripts/init.sh`，首次启动自动生成 6 组随机 secrets（MySQL root/app、Redis、JWT、Cookie、Token，均 Base64URL 编码 ≥32 字符）、4 个空的可选 secrets、bcrypt cost 12 admin 密码 hash 和 `.env` 文件；优先用主机 Python，缺失时自动退到 Docker 临时容器生成
 - **小刀订单免拼发货**：小刀（砍价）订单自动调用闲鱼免拼发货接口（mtop.idle.groupon.activity.seller.freeshipping）完成发货，而非普通确认发货接口；订单同步时通过 btnList 的 SKIP_PIN 自动检测小刀订单并标记 is_bargain（只置 True 不回退）；自动发货网关根据订单小刀状态智能路由免拼/确认发货接口
 - **发布商品页面增强**：运费设置支持包邮/一口价/无需邮寄三模式互斥切换；图片 URL 增加 resolveTrustedMediaUrl 白名单防护（防 XSS）；图片上传增加 imageUploadValidationMessage 预校验（大小≤5MB、MIME 类型、扩展名）；账号选择增加 pickPreferredAccount 智能选择（优先可用账号）
 - **在线消息页面客户订单板块**：会话侧边栏新增客户订单卡片（封面、状态徽章、金额、订单详情入口）；新增 getCustomerOrders API；后端 /orders 接口支持 buyerId 过滤
@@ -89,8 +90,8 @@
 - 部署方式：Docker Compose
 
 ### 安全特性
-- 全套生产秘密通过文件注入（`./secrets/*`，权限 `0600`）
-- MySQL 最小权限双账号（迁移账号与运行账号分离）
+- 全套生产秘密通过文件注入（`secrets/` 目录 `0700`，文件 `0644`）
+- MySQL root 与数据库级 app 账号分离
 - 容器 `read_only` + `cap_drop: ALL` + `no-new-privileges` 加固
 - JWT 认证、Cookie 加密、CORS 白名单、登录限流
 - 审计日志与保留期管理

@@ -63,10 +63,9 @@ touch_optional() {
 # ---------- 3. 生成必需的随机 secrets ----------
 info "生成随机 secrets（如已存在则跳过）..."
 
-# 3 组 MySQL 密码必须互不相同且 >=16 字符；gen_random 32 bytes 输出 ~43 字符，远超要求
+# root 与 app 两组 MySQL 密码必须不同且 >=16 字符；gen_random 32 bytes 输出约 43 字符
 write_secret "$SECRETS_DIR/mysql-root-password"       "$(gen_random 32)"
 write_secret "$SECRETS_DIR/mysql-app-password"        "$(gen_random 32)"
-write_secret "$SECRETS_DIR/mysql-migration-password"  "$(gen_random 32)"
 # Redis 密码必须 Base64URL 字符
 write_secret "$SECRETS_DIR/redis-password"            "$(gen_random 32)"
 # JWT/Cookie/Token 必须 >=32 字符
