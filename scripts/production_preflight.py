@@ -418,7 +418,7 @@ def validate(values: dict[str, str], env_path: Path | None = None) -> Validation
                 "must explicitly contain the PUBLIC_BASE_URL hostname",
             )
     else:
-        report.warning(
+        report.warn(
             "PUBLIC_BASE_URL",
             "is not configured; external ingress verification remains the deployment owner's responsibility",
         )
