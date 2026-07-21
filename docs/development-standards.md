@@ -64,9 +64,9 @@ npm --prefix apps/crawler run build
 
 ## 内部提交规范
 
-- 使用 Conventional Commits：`<type>(<scope>): <description>`。
-- `type` 和可选的 `scope` 使用英文关键字，`description` 使用简洁中文；不要使用
-  英文描述替代项目提交说明。例如：`docs(文档): 整理项目文档与协作规范`。
+- 使用简化的 Conventional Commits：`<type>: <description>`，不使用作用域括号。
+- `type` 使用英文关键字，`description` 使用简洁中文；不要使用英文描述替代项目
+  提交说明。例如：`docs: 整理项目文档与协作规范`。
 - 类型限定为 `feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test` 和 `chore`。
 - 除非明确需要发布或维护分支，从 `main` 创建 `feat/<name>` 或 `fix/<name>` 分支。
 - 提交说明必须描述行为变化、已执行验证、运维或安全影响以及文档更新。
@@ -93,7 +93,7 @@ npm --prefix apps/crawler run build
   `docker-compose.yml` 中同时声明对应的 `image` 与 `build`。
 - 修改镜像命名空间时，同一变更中更新工作流 `IMAGE_NAMESPACE`、Compose 镜像默认值和
   `.env.example` 的镜像变量。
-- 标准部署使用 `start.sh` 或 `start.bat`；仅在明确需要构建当前源码时使用 `--build`。
+- 生产初始化、启动、检查更新、更新和停止统一使用 `deploy.sh` 子命令；镜像构建由 `up` 自动完成。
 
 ## 文档维护
 

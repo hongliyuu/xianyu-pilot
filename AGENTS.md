@@ -25,5 +25,5 @@
 
 - 执行与改动范围匹配的验证，至少运行 `scripts/verify-local.ps1` 或开发规范中的等价命令。
 - 在变更说明中记录已执行验证以及未执行项和原因。
-- 提交使用 Conventional Commits，类型和作用域使用英文关键字，描述使用中文。
+- 提交使用简化的 Conventional Commits：英文类型后直接接中文描述，不使用作用域括号。
 - 用户可见功能或修复进入 `main` 前，按开发规范更新 `CHANGELOG.md`。

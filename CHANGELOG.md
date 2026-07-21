@@ -8,17 +8,21 @@
 
 ## [Unreleased]
 
+### 变更
+
+- **Linux 生产入口收敛**：删除 Windows 生产启动、初始化和验证入口，生产部署统一使用 Shell 脚本；本地开发入口留待后续阶段单独整理。
+- **容器端口统一**：生产 Web、API、Crawler 使用连续的 `12400`、`12401`、`12402`，Web 宿主机与容器端口保持一致且默认仅绑定回环地址。
+- **首次密码加固**：移除 `admin123` 默认密码，首次初始化改为生成并仅显示一次随机管理员密码，已有密码哈希时不再输出误导性密码。
+
 ### 新增
-- **一键启动脚本**：新增 `start.sh`（Linux/macOS）与 `start.bat`（Windows）入口脚本，自动调用初始化向导、拉取镜像、启动 7 个服务并等待健康检查；支持 `--build`（本地源码构建）和 `--no-pull`（跳过拉取）参数
-- **首次初始化向导**：新增 `scripts/setup-wizard.sh` 与 `scripts/setup-wizard.ps1`，首次启动自动生成 7 组随机 secrets（MySQL root/app/migration 三组、Redis、JWT、Cookie、Token，均 Base64URL 编码 ≥32 字符）、4 个空的可选 secrets、bcrypt cost 12 admin 密码 hash 和 `.env` 文件；优先用主机 Python，缺失时自动退到 Docker 临时容器生成
-- **跨平台运维包装器**：新增 `scripts/production_ops.py`，提供 `status`/`logs`/`stop`/`restart` 四个子命令，限制日志服务名白名单（mysql/redis/migrate/api/worker/crawler/web）和 `--tail` 范围（1-10000），停止命令默认不删除命名卷
+- **统一生产部署入口**：`deploy.sh` 提供 `init`、`up`、`status`、`logs`、`check-update`、`update` 和 `stop` 子命令，`up` 自动构建 Git SHA 镜像；`update` 始终更新到最新正式版本且不自动备份或回滚。
+- **首次初始化脚本**：新增 `scripts/init.sh`，首次启动自动生成 7 组随机 secrets（MySQL root/app/migration 三组、Redis、JWT、Cookie、Token，均 Base64URL 编码 ≥32 字符）、4 个空的可选 secrets、bcrypt cost 12 admin 密码 hash 和 `.env` 文件；优先用主机 Python，缺失时自动退到 Docker 临时容器生成
 - **小刀订单免拼发货**：小刀（砍价）订单自动调用闲鱼免拼发货接口（mtop.idle.groupon.activity.seller.freeshipping）完成发货，而非普通确认发货接口；订单同步时通过 btnList 的 SKIP_PIN 自动检测小刀订单并标记 is_bargain（只置 True 不回退）；自动发货网关根据订单小刀状态智能路由免拼/确认发货接口
 - **发布商品页面增强**：运费设置支持包邮/一口价/无需邮寄三模式互斥切换；图片 URL 增加 resolveTrustedMediaUrl 白名单防护（防 XSS）；图片上传增加 imageUploadValidationMessage 预校验（大小≤5MB、MIME 类型、扩展名）；账号选择增加 pickPreferredAccount 智能选择（优先可用账号）
 - **在线消息页面客户订单板块**：会话侧边栏新增客户订单卡片（封面、状态徽章、金额、订单详情入口）；新增 getCustomerOrders API；后端 /orders 接口支持 buyerId 过滤
 - **发布商品基础设施**：新增 requestLifecycle.js（createRequestGate 请求竞态保护）、imageUploadPolicy.js（图片上传预校验）、publishAddress.js（地址标准化工具）、PublishAddressCascader.vue（三级地址级联选择器）、safeMediaUrl.js（可信媒体 URL 校验）
 - **发货记录页面数据完整性**：后端 SQL 补齐 purchase_time/goods_cover_pic/seller_name/seller_display_name/goods_id 字段；JOIN xianyu_account 表获取卖家信息；前端新增商品缩略图列（含 onGoodsThumbError 容错）、卖家列、购买时间列；详情面板新增外部订单号/商品ID/卖家/购买时间字段
-- **一键检查 GitHub 更新**：在"关于我们"页新增"版本更新检查"卡片，自动识别 Docker / 源码部署方式，生成对应更新脚本，支持镜像源切换（GHCR / 阿里云 ACR / 离线 tar.gz）和"我已执行完成，刷新页面"按钮；后端新增 `GET /system/update-info`、`POST /system/update-feedback` 端点，带 6 小时缓存和 GitHub API 失败兜底
-- **新手部署向导**：新增 `scripts/setup-wizard.sh` 与 `setup-wizard.ps1`，首次启动自动检测 Docker、生成随机 secrets、校验配置、启动服务；`start.sh` / `start.bat` 在缺少 `.env` 或 `./secrets/` 时自动调用向导
+- **一键检查 GitHub 更新**：在"关于我们"页新增"版本更新检查"卡片，统一生成 `./deploy.sh update` 命令，并保留 Release 下载入口和 GitHub API 失败兜底。
 - **首次登录引导清单**：`DashboardPage` 顶部接入 `OnboardingChecklist`，通过 `localStorage` 持久化完成状态，支持"不再提示"按钮；自动检查 `/system/runtime-status` 同步模型配置完成情况
 - **README 快速上手章节**：新增"3 分钟快速上手"章节，包含前置要求、3 步启动、常见问题表格，新手无需阅读生产部署详细文档即可上手
 - **错误文案带下一步建议**：`friendlyError.js` 扩展数据库/Redis/WebSocket/Token 失效/同步失败等错误的文案，直接告诉用户"下一步该怎么做"

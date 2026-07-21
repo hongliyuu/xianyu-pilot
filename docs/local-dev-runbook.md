@@ -1,7 +1,7 @@
 # 开源版本地运行说明
 
 > 本文只适用于本机开发，不是生产部署依据。生产部署必须使用根目录
-> `.env.example`、`start.sh`/`start.bat` 和 `docs/production-readiness.md`。
+> `.env.example`、`deploy.sh` 和 `docs/production-readiness.md`。
 
 ## 目标
 

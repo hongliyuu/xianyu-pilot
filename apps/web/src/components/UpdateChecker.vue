@@ -37,37 +37,6 @@
         <pre>{{ info.releaseNotes }}</pre>
       </details>
 
-      <div class="update-deployment">
-        <span class="update-label">部署方式</span>
-        <div class="deployment-tabs">
-          <button
-            v-for="opt in deploymentOptions"
-            :key="opt.value"
-            type="button"
-            :class="['deployment-tab', { active: selectedMode === opt.value }]"
-            @click="selectedMode = opt.value"
-          >
-            {{ opt.label }}
-          </button>
-        </div>
-        <span class="deployment-hint">{{ deploymentHint }}</span>
-      </div>
-
-      <div v-if="selectedMode === 'docker' && info.mirrors.length > 1" class="update-mirrors">
-        <span class="update-label">镜像源</span>
-        <div class="mirror-tabs">
-          <button
-            v-for="mirror in info.mirrors"
-            :key="mirror.registry"
-            type="button"
-            :class="['mirror-tab', { active: selectedMirror === mirror.registry }]"
-            @click="selectMirror(mirror)"
-          >
-            {{ mirror.name }}
-          </button>
-        </div>
-      </div>
-
       <div class="update-script-block">
         <div class="script-header">
           <span class="script-title">执行脚本（在项目根目录运行）</span>
@@ -132,59 +101,14 @@ const info = ref({
   releaseNotes: '',
   deploymentMode: 'unknown',
   updateScript: '',
-  updateScriptWindows: '',
-  mirrors: [],
   offlineBackup: { tarballUrl: '', releaseUrl: '' },
   githubApiSource: '',
   cachedAt: '',
 })
 const errorMessage = ref('')
-const selectedMode = ref('docker')
-const selectedMirror = ref('')
 const copied = ref(false)
-
-const deploymentOptions = [
-  { label: 'Docker 镜像', value: 'docker' },
-  { label: '源码构建', value: 'source' },
-]
-
-const deploymentHint = computed(() => {
-  if (selectedMode.value === 'docker') return '通过 docker compose 拉取镜像并重启容器，数据通过命名卷保留不丢失。'
-  if (selectedMode.value === 'source') return '通过 git pull 拉取源码并重新构建启动，需保证本地无未提交改动。'
-  return ''
-})
-
-const isWindows = computed(() => /windows/i.test(navigator.userAgent))
-
-const currentScript = computed(() => {
-  if (selectedMode.value === 'source') {
-    return isWindows.value ? info.value.updateScriptWindows : info.value.updateScript
-  }
-  // Docker mode: re-generate based on selected mirror
-  return buildDockerScript(selectedMirror.value)
-})
-
-function buildDockerScript(mirrorRegistry) {
-  const ghcrDefault = 'ghcr.io/xianyu-assistant-opensource'
-  if (!mirrorRegistry || mirrorRegistry === ghcrDefault) {
-    return 'docker compose pull && docker compose up -d'
-  }
-  const apiImage = `${mirrorRegistry}/xianyu-assistant-api:latest`
-  const webImage = `${mirrorRegistry}/xianyu-assistant-web:latest`
-  const crawlerImage = `${mirrorRegistry}/xianyu-assistant-crawler:latest`
-  if (isWindows.value) {
-    return `$env:API_IMAGE='${apiImage}'\n$env:WEB_IMAGE='${webImage}'\n$env:CRAWLER_IMAGE='${crawlerImage}'\ndocker compose pull && docker compose up -d`
-  }
-  return `export API_IMAGE=${apiImage}\nexport WEB_IMAGE=${webImage}\nexport CRAWLER_IMAGE=${crawlerImage}\ndocker compose pull && docker compose up -d`
-}
-
-const scriptTip = computed(() => {
-  if (selectedMode.value === 'source') return '执行前请确认本地没有未提交的改动，否则 git pull 会失败。'
-  if (selectedMirror.value && selectedMirror.value !== 'ghcr.io/xianyu-assistant-opensource') {
-    return '使用阿里云 ACR 时，首次需先 docker login <acr_url> 完成登录。'
-  }
-  return '执行前请确认已在项目根目录（含 docker-compose.yml 的目录）。'
-})
+const currentScript = computed(() => info.value.updateScript || './deploy.sh update')
+const scriptTip = computed(() => '命令会切换代码、构建镜像、执行迁移并检查新版本。')
 
 const githubReleaseFallbackUrl = computed(() => {
   if (info.value.offlineBackup.releaseUrl) return info.value.offlineBackup.releaseUrl
@@ -218,21 +142,10 @@ async function checkUpdate() {
       releaseNotes: data.releaseNotes || '',
       deploymentMode: data.deploymentMode || 'unknown',
       updateScript: data.updateScript || '',
-      updateScriptWindows: data.updateScriptWindows || '',
-      mirrors: Array.isArray(data.mirrors) ? data.mirrors : [],
       offlineBackup: data.offlineBackup || { tarballUrl: '', releaseUrl: '' },
       githubApiSource: data.githubApiSource || '',
       cachedAt: data.cachedAt || '',
     }
-    // Initialize selection from deployment mode
-    if (info.value.deploymentMode === 'docker' || info.value.deploymentMode === 'source') {
-      selectedMode.value = info.value.deploymentMode
-    } else {
-      selectedMode.value = 'docker'
-    }
-    // Initialize mirror to GHCR default
-    selectedMirror.value = info.value.mirrors[0]?.registry || 'ghcr.io/xianyu-assistant-opensource'
-
     if (data.githubApiSource === 'unavailable') {
       state.value = 'failed'
       errorMessage.value = 'GitHub API 暂时不可用，可能是网络限制或 GitHub 限流。请稍后重试，或直接访问 GitHub Release 页手动下载。'
@@ -249,11 +162,6 @@ async function checkUpdate() {
   }
 }
 
-function selectMirror(mirror) {
-  selectedMirror.value = mirror.registry
-  copied.value = false
-}
-
 async function onCopyScript() {
   const ok = await copyText(currentScript.value)
   copied.value = ok
@@ -266,7 +174,7 @@ async function onExecuted() {
       success: true,
       fromVersion: APP_VERSION,
       toVersion: info.value.latestVersion,
-      deploymentMode: selectedMode.value,
+      deploymentMode: info.value.deploymentMode,
     })
   } catch {
     // feedback failure should not block reload
@@ -370,48 +278,6 @@ async function onExecuted() {
   color: #334155;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.update-deployment {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.deployment-tabs, .mirror-tabs {
-  display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  background: #eef2f7;
-  border-radius: 10px;
-}
-.deployment-tab, .mirror-tab {
-  padding: 6px 14px;
-  border: 0;
-  background: transparent;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.deployment-tab.active, .mirror-tab.active {
-  background: #fff;
-  color: #2563eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-.deployment-hint {
-  font-size: 11px;
-  color: #94a3b8;
-  flex-basis: 100%;
-}
-
-.update-mirrors {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 }
 
 .update-script-block {

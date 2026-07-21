@@ -16,5 +16,5 @@ COPY --from=build --chown=nginx:nginx /app/dist /usr/share/nginx/html
 # nginx runs as a non-root master on an unprivileged port. Runtime-writable
 # paths are supplied as tmpfs mounts by Compose.
 USER nginx
-EXPOSE 8080
+EXPOSE 12400
 CMD ["nginx", "-g", "daemon off;"]

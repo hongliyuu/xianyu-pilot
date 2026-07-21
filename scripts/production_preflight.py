@@ -401,9 +401,7 @@ def validate(values: dict[str, str], env_path: Path | None = None) -> Validation
                 "WEB_BIND_ADDRESS",
                 "must remain loopback-only behind the reviewed same-host TLS proxy",
             )
-    if not public_url:
-        report.error("PUBLIC_BASE_URL", "the real public HTTPS origin is required")
-    else:
+    if public_url:
         _validate_origin(
             public_url,
             report,
@@ -419,6 +417,11 @@ def validate(values: dict[str, str], env_path: Path | None = None) -> Validation
                 "TRUSTED_HOSTS",
                 "must explicitly contain the PUBLIC_BASE_URL hostname",
             )
+    else:
+        report.warning(
+            "PUBLIC_BASE_URL",
+            "is not configured; external ingress verification remains the deployment owner's responsibility",
+        )
 
     if env_path is not None and os.name != "nt" and env_path.exists():
         permissions = stat.S_IMODE(env_path.stat().st_mode)

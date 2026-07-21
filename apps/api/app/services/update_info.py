@@ -23,10 +23,6 @@ GITHUB_TIMEOUT_SECONDS = 8.0
 CACHE_TTL_SECONDS = 6 * 3600  # 6 hours
 RELEASE_NOTES_MAX_CHARS = 2000
 
-# Default GHCR image namespace. Mirrors docker-compose.yml defaults.
-DEFAULT_GHCR_NAMESPACE = "ghcr.io/xianyu-assistant-opensource"
-
-
 @dataclass
 class CachedRelease:
     """In-memory cache entry for the latest GitHub release."""
@@ -162,55 +158,9 @@ async def _get_cached_release() -> tuple[Optional[CachedRelease], str]:
     return release, "live"
 
 
-def _build_mirrors() -> list[dict[str, Any]]:
-    """Return the list of mirror options the UI can switch between."""
-    mirrors: list[dict[str, Any]] = [
-        {"name": "GHCR 默认", "registry": DEFAULT_GHCR_NAMESPACE, "available": True},
-    ]
-    acr_url = (settings.acr_registry_url or "").strip()
-    if acr_url:
-        mirrors.append({"name": "阿里云 ACR", "registry": acr_url, "available": None})
-    return mirrors
-
-
-def _build_update_script(deployment_mode: str, mirror_registry: Optional[str] = None) -> tuple[str, str]:
-    """Return (linux_script, windows_script) for the given mode and mirror."""
-    if deployment_mode == "source":
-        return (
-            "git pull origin main && sh ./start.sh",
-            "git pull origin main && start.bat",
-        )
-
-    # Docker mode: default GHCR is just `docker compose pull`.
-    if mirror_registry is None or mirror_registry == DEFAULT_GHCR_NAMESPACE:
-        return (
-            "docker compose pull && docker compose up -d",
-            "docker compose pull && docker compose up -d",
-        )
-
-    # Custom ACR: instruct the user to set the *_IMAGE env vars first.
-    api_image = f"{mirror_registry}/xianyu-assistant-api:latest"
-    web_image = f"{mirror_registry}/xianyu-assistant-web:latest"
-    crawler_image = f"{mirror_registry}/xianyu-assistant-crawler:latest"
-    env_exports = (
-        f"export API_IMAGE={api_image}\n"
-        f"export WEB_IMAGE={web_image}\n"
-        f"export CRAWLER_IMAGE={crawler_image}\n"
-    )
-    ps_exports = (
-        f"$env:API_IMAGE='{api_image}'\n"
-        f"$env:WEB_IMAGE='{web_image}'\n"
-        f"$env:CRAWLER_IMAGE='{crawler_image}'\n"
-    )
-    linux_script = (
-        f"{env_exports}"
-        f"docker compose pull && docker compose up -d"
-    )
-    windows_script = (
-        f"{ps_exports}"
-        f"docker compose pull && docker compose up -d"
-    )
-    return linux_script, windows_script
+def _build_update_script() -> str:
+    """Return the only supported production update command."""
+    return "./deploy.sh update"
 
 
 def _build_offline_backup(release: Optional[CachedRelease], repo: str) -> dict[str, str]:
@@ -241,7 +191,7 @@ async def build_update_info(current_version: str) -> dict[str, Any]:
     latest_version = _normalize_version(release.tag if release else "")
     has_update = bool(latest_version) and _compare_versions(current_version, latest_version)
     deployment_mode = detect_deployment_mode()
-    linux_script, windows_script = _build_update_script(deployment_mode)
+    update_script = _build_update_script()
 
     return {
         "currentVersion": current_version,
@@ -250,9 +200,7 @@ async def build_update_info(current_version: str) -> dict[str, Any]:
         "deploymentMode": deployment_mode,
         "releaseNotes": release.body if release else "",
         "publishedAt": release.published_at if release else "",
-        "updateScript": linux_script,
-        "updateScriptWindows": windows_script,
-        "mirrors": _build_mirrors(),
+        "updateScript": update_script,
         "offlineBackup": _build_offline_backup(release, repo),
         "githubApiSource": source,
         "cachedAt": _format_cached_at(release),

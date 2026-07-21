@@ -13,7 +13,6 @@ PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$PROJECT_DIR"
 
 SECRETS_DIR="./secrets"
-DEFAULT_ADMIN_PASSWORD="admin123"
 
 color() { printf '\033[%sm%s\033[0m' "$1" "$2"; }
 info()  { printf '%s %s\n' "$(color '1;36' '•')" "$*"; }
@@ -88,13 +87,11 @@ touch_optional "$SECRETS_DIR/amap-api-key"
 #   3. Docker 容器 python:3.11-slim + pip install bcrypt（默认 PyPI 源）
 #   4. Docker 容器 python:3.11-slim + pip install bcrypt（国内清华源，解决网络问题）
 #   5. Docker 容器 python:3.11-alpine（更小，拉取快）+ 国内源
-#   6. 最终兜底：跳过生成，由 start.sh 在镜像构建后用 api 镜像生成
-ADMIN_PASSWORD="${ADMIN_PASSWORD:-$DEFAULT_ADMIN_PASSWORD}"
-
 if [ -s "$SECRETS_DIR/admin-password-hash" ]; then
   ok "admin-password-hash 已存在（跳过生成）"
-  DISPLAY_PASSWORD="$ADMIN_PASSWORD"
+  DISPLAY_PASSWORD=""
 else
+  ADMIN_PASSWORD="${ADMIN_PASSWORD:-$(gen_random 24)}"
   info "生成 admin bcrypt 密码 hash（cost 12）..."
   export ADMIN_PASSWORD
 
@@ -230,12 +227,9 @@ print(bcrypt.hashpw(pw, bcrypt.gensalt(rounds=12)).decode())
     chmod 644 "$SECRETS_DIR/admin-password-hash" 2>/dev/null || true
     ok "admin bcrypt hash 生成完成"
   else
-    # 所有方案失败：不终止脚本，由 start.sh 用 api 镜像兜底生成
-    warn "所有 bcrypt 生成方案均失败，将延迟到镜像构建后用 api 容器生成"
+    warn "所有 bcrypt 生成方案均失败"
     warn "失败原因：$bcrypt_failed_reasons"
-    # 创建空文件作为标记，start.sh 会检测并用 api 镜像生成
-    : > "$SECRETS_DIR/admin-password-hash"
-    chmod 644 "$SECRETS_DIR/admin-password-hash" 2>/dev/null || true
+    die "无法生成管理员密码 hash，请安装 Python bcrypt 后重试"
   fi
 
   DISPLAY_PASSWORD="$ADMIN_PASSWORD"
@@ -255,20 +249,25 @@ else
 fi
 
 # ---------- 7. 完成 ----------
-DISPLAY_PASSWORD="${DISPLAY_PASSWORD:-$DEFAULT_ADMIN_PASSWORD}"
-
 cat <<EOF
 
 $(ok "初始化完成")
+EOF
 
+if [ -n "$DISPLAY_PASSWORD" ]; then
+cat <<EOF
 默认管理员账号：
   用户名：admin
   密码：${DISPLAY_PASSWORD}
 
-$(warn "请尽快登录后修改默认密码！")
+$(warn "该随机密码只显示一次，请立即妥善保存。")
+EOF
+else
+  info "管理员密码哈希已存在，未生成或显示新密码"
+fi
 
+cat <<EOF
 下一步：
-  启动服务：sh ./start.sh
-  或手动：docker compose pull && docker compose up -d
+  启动服务：./deploy.sh up
 
 EOF

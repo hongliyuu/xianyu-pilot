@@ -110,7 +110,7 @@ services:
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
-      PORT: 3001
+      PORT: 12402
       INTERNAL_API_TOKEN_FILE: /run/secrets/internal_api_token
       CRAWLER_JSON_LIMIT: ${CRAWLER_JSON_LIMIT:-256kb}
       CRAWLER_RATE_LIMIT_WINDOW_MS: ${CRAWLER_RATE_LIMIT_WINDOW_MS:-60000}
@@ -127,7 +127,7 @@ services:
       # capabilities/no-new-privileges profile. Container isolation remains on.
       PLAYWRIGHT_DISABLE_SANDBOX: ${PLAYWRIGHT_DISABLE_SANDBOX:-true}
     expose:
-      - "3001"
+      - "12402"
     secrets:
       - internal_api_token
     tmpfs:
@@ -138,7 +138,7 @@ services:
         ipv4_address: 172.30.240.30
       egress:
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:12402/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 15s
       timeout: 5s
       retries: 10
@@ -249,8 +249,8 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-xianyu-assistant-web}
       COOKIE_CRYPTO_SECRET_FILE: /run/secrets/cookie_crypto_secret
       INTERNAL_API_TOKEN_FILE: /run/secrets/internal_api_token
-      CRAWLER_BASE_URL: http://crawler:3001
-      CRAWLER_SERVICE_URL: http://crawler:3001
+      CRAWLER_BASE_URL: http://crawler:12402
+      CRAWLER_SERVICE_URL: http://crawler:12402
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
       TRUSTED_PROXY_IPS: ${TRUSTED_PROXY_IPS:-172.30.240.20/32}
       TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,api}
@@ -407,7 +407,7 @@ services:
     cap_drop:
       - ALL
     ports:
-      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8080}:8080"
+      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-12400}:12400"
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=128m,mode=1777
     networks:
@@ -419,7 +419,7 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/readyz | grep -q '\"status\":\"ready\"'"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:12400/readyz | grep -q '\"status\":\"ready\"'"]
       interval: 15s
       timeout: 5s
       retries: 10
@@ -452,7 +452,7 @@ volumes:
   api_data:
 
 secrets:
-  # 所有密钥均从 ./secrets/<name> 文件读取，由 start.sh / start.bat 首次启动时
+  # 所有密钥均从 ./secrets/<name> 文件读取，由 deploy.sh 首次启动时
   # 自动生成。容器内通过 environment 中的 *_FILE=/run/secrets/<target> 读取。
   # 主机文件路径与 .env.example 中的 *_FILE 变量保持一致作为文档说明。
   admin_password_hash:

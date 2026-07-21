@@ -32,6 +32,7 @@ venv/
 .playwright-cli/
 dogfood-output/
 output/
+.deploy/
 apps/api/uploads/
 apps/api/screenshots/
 apps/web/mobile-*.png

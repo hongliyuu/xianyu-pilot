@@ -19,7 +19,7 @@ ENV NODE_ENV=production \
     HOME=/home/pwuser \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV HOST=0.0.0.0
-ENV PORT=3001
+ENV PORT=12402
 WORKDIR /app
 
 COPY --from=build --chown=pwuser:pwuser /app/package.json /app/package-lock.json ./
@@ -27,5 +27,5 @@ COPY --from=build --chown=pwuser:pwuser /app/node_modules ./node_modules
 COPY --from=build --chown=pwuser:pwuser /app/dist ./dist
 
 USER pwuser
-EXPOSE 3001
+EXPOSE 12402
 CMD ["node", "dist/server.js"]

@@ -3,11 +3,7 @@
 This document covers the production deployment procedure, operational controls,
 backup/recovery requirements, and incident rules for the open-source edition.
 
-The normal production preflight validates technical configuration only:
-
-```sh
-python scripts/production_preflight.py --env-file .env
-```
+生产配置预检由 `./deploy.sh up` 在只读临时容器内自动执行，不单独提供用户命令。
 
 ## Product-surface boundary
 
@@ -164,23 +160,14 @@ These are baseline controls, not a certification or warranty.
 
 ### Validate and start
 
-On Linux/macOS:
-
 ```sh
-sh ./start.sh
+./deploy.sh init
+./deploy.sh up
 ```
 
-On Windows:
-
-```powershell
-.\start.bat
-```
-
-The wrappers run the secret-safe preflight, `docker compose config --quiet`,
-build/start with `--wait`, and the Web `/healthz` probe. They deliberately never
-print resolved Compose configuration because it contains secrets. To validate an
-already-built release, call the verification script with `--no-build` (shell) or
-`-NoBuild` (PowerShell).
+`up` 会构建当前 Git 版本镜像，在 API 镜像内执行生产配置预检，然后通过 Compose
+执行迁移、启动服务并检查 Web 就绪状态。运维和更新必须使用 `deploy.sh` 对应子命令，不直接执行组合式 Git 或
+Compose 命令。更新流程不提供自动备份或应用版本回滚。
 
 After startup, validate through the TLS endpoint—not just localhost—and confirm:
 
