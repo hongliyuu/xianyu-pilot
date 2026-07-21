@@ -47,8 +47,8 @@
 提交评审前执行与改动范围匹配的检查。
 
 ```powershell
-# Windows 本地校验包装器
-.\verify-local.bat
+# Windows 本地校验
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-local.ps1
 
 # 工具已安装时的等价检查
 npm --prefix apps/web run lint
@@ -62,14 +62,14 @@ npm --prefix apps/crawler run build
 - 当验证依赖浏览器、平台账号、密钥或部署环境时，在 Pull Request 中记录手动验证步骤。
 - 不得将仅构建通过表述为端到端、生产、安全或恢复验证证据。
 
-## 提交与 Pull Request
+## 内部提交规范
 
 - 使用 Conventional Commits：`<type>(<scope>): <description>`。
 - `type` 和可选的 `scope` 使用英文关键字，`description` 使用简洁中文；不要使用
   英文描述替代项目提交说明。例如：`docs(文档): 整理项目文档与协作规范`。
 - 类型限定为 `feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test` 和 `chore`。
 - 除非明确需要发布或维护分支，从 `main` 创建 `feat/<name>` 或 `fix/<name>` 分支。
-- Pull Request 必须描述行为变化、已执行验证、运维或安全影响以及文档更新。
+- 提交说明必须描述行为变化、已执行验证、运维或安全影响以及文档更新。
 - 安全漏洞遵循 `SECURITY.md` 的流程处理，不得通过公开 Issue 或 Pull Request 报告。
 
 ## 变更日志与发布
@@ -100,4 +100,4 @@ npm --prefix apps/crawler run build
 - 通过 [文档索引](README.md) 查找每个主题的所有者文档。
 - 命令、配置、安全控制、数据处理、部署行为或用户可见能力变化时，更新对应的
   所有者文档。
-- `README.md`、`CONTRIBUTING.md` 与本文只保留入口和规则，不复制长篇操作流程。
+- `README.md` 与本文只保留入口和规则，不复制长篇操作流程。

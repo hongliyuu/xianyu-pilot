@@ -12,7 +12,6 @@
 | 评审生产发布 | [生产就绪说明](production-readiness.md) | 发布门禁、安全、运维证据与已知限制 |
 | 校验备份或规划恢复 | [备份与恢复](backup-restore.md) | 备份包校验与恢复安全约定 |
 | 变更数据库结构 | [数据库迁移](../apps/api/migrations/README.md) | 迁移生命周期、兼容性与回滚限制 |
-| 参与代码或文档贡献 | [贡献指南](../CONTRIBUTING.md) | 协作与 Pull Request 流程 |
 | 遵循研发与发布规则 | [开发规范](development-standards.md) | 代码、验证、变更日志与镜像发布规则 |
 | 报告安全问题 | [安全策略](../SECURITY.md) | 漏洞披露与生产安全要求 |
 

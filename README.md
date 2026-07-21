@@ -284,12 +284,6 @@ python scripts/production_ops.py --env-file .env restart api web
 | [`docs/backup-restore.md`](docs/backup-restore.md) | 备份与恢复 |
 | [`apps/api/migrations/README.md`](apps/api/migrations/README.md) | 数据库迁移说明 |
 | [`SECURITY.md`](SECURITY.md) | 安全策略 |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | 贡献指南 |
-
-## 🤝 贡献
-
-欢迎提交 Issue 与 Pull Request。提交前请先阅读 [`CONTRIBUTING.md`](CONTRIBUTING.md)，并确保本地 `verify-local.bat`（或对应脚本）通过。
-
 ## 🧸 特别鸣谢
 
 本项目在开发过程中参考了以下开源项目，特此致谢：
