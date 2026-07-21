@@ -1,128 +1,43 @@
 # 贡献指南
 
-感谢你对闲鱼助手开源项目的关注！本文档描述了参与贡献的流程和规范。
+感谢你参与闲鱼助手。本文定义协作与 Pull Request 流程；代码、验证、发布和
+Docker 镜像规则以 [开发规范](docs/development-standards.md) 为准，完整文档入口见
+[文档索引](docs/README.md)。
 
 ## 行为准则
 
-- 保持尊重和友善的沟通态度
-- 对不同观点保持开放心态
-- 关注项目整体利益，而非个人偏好
+- 保持尊重、友善和可追溯的沟通。
+- 讨论以代码、测试、文档和可复现证据为依据。
+- 不在 Issue、Pull Request、日志或截图中提交账号、Cookie、密钥、个人信息或
+  外部平台的敏感响应。
 
-## 开发环境准备
+## 开始前
 
-### 前置要求
+1. 从 `main` 创建功能分支：`feat/<name>` 或 `fix/<name>`。
+2. 阅读与改动范围对应的专题文档，尤其是本地开发、迁移、部署或安全文档。
+3. 保持改动聚焦，不混入无关重构、格式化或依赖升级。
+4. 涉及外部平台、数据库结构、部署、安全边界或用户可见行为时，同时更新对应的
+   文档所有者文件。
 
-- Python 3.11+
-- Node.js 22+（推荐使用 LTS 版本）
-- MySQL 8.0
-- Redis 7
-- Git
+## 提交与 Pull Request
 
-### 本地启动
-
-1. 克隆仓库并安装依赖：
-
-```bash
-git clone <repo-url>
-cd xianyu-assistant-opensource
-cp .env.example .env
-# 编辑 .env，填写数据库密码等必填项
-```
-
-2. 后端依赖安装：
-
-```bash
-cd apps/api
-pip install -r requirements.txt
-```
-
-3. 前端依赖安装：
-
-```bash
-cd apps/web
-npm install
-```
-
-4. 启动服务：
-
-```bash
-# Windows
-start.bat
-
-# Linux/Mac
-./start.sh
-```
-
-## 代码规范
-
-### Python 后端
-
-- 使用 `async/await`，不使用回调风格
-- 中间件文件放在 `apps/api/app/middleware/`，一个文件只处理一个关注点
-- 路由文件不参与中间件重构
-- 数据库查询使用 SQLAlchemy 2.0 async 风格
-- 新增配置项从 `xianyu_sys_setting` 表读取，使用 60 秒缓存
-
-### Vue 前端
-
-- 使用 Vue 3 Composition API（`<script setup>`）
-- 请求统一通过 `apps/web/src/utils/request.js` 发送
-- 页面组件放在 `apps/web/src/pages/`，复用组件放在 `apps/web/src/components/`
-- 生产代码中禁止裸露的 `console.log`（如需调试，包裹在 `if (import.meta.env.DEV)` 中）
-
-### 通用
-
-- 提交前确保 `npm run build` 和 Python 语法检查通过
-- 新增功能需附带基础测试
-- 不引入未授权的第三方资源（图片、字体、数据）
-
-## 提交规范
-
-### Git 提交信息
-
-使用约定式提交（Conventional Commits）格式：
-
-```
-<type>(<scope>): <description>
-
-<body>
-```
-
-类型（type）：
-- `feat`：新功能
-- `fix`：Bug 修复
-- `docs`：文档变更
-- `style`：代码格式调整（不影响功能）
-- `refactor`：重构（既不是新功能也不是修 Bug）
-- `perf`：性能优化
-- `test`：测试相关
-- `chore`：构建、依赖、配置等杂项
-
-示例：
-```
-feat(auth): 添加邮箱验证码登录支持
-fix(middleware): 修复公开路径白名单缺失问题
-docs(readme): 更新部署说明
-```
-
-### 分支策略
-
-- `main`：稳定分支，保持可发布状态
-- 功能开发：`feat/<feature-name>`
-- Bug 修复：`fix/<bug-description>`
-
-## Pull Request 流程
-
-1. 从 `main` 创建功能分支
-2. 开发并测试通过后提交 PR
-3. PR 描述需包含：变更说明、测试方式、影响范围
-4. 等待 Code Review，根据反馈调整
-5. 合并后删除功能分支
+- 使用 Conventional Commits，例如 `feat(auth): 增加会话状态查询`；类型和作用域使用英文，
+  描述使用中文。
+- 提交前执行与改动范围匹配的验证；标准命令和验证要求见
+  [开发规范](docs/development-standards.md)。
+- Pull Request 必须说明：
+  - 行为变化与影响范围；
+  - 已执行的自动化或手动验证；
+  - 数据、部署、安全或外部平台风险；
+  - 更新的文档，或无需更新文档的理由。
+- 审查通过后合并；合并完成后删除功能分支。
 
 ## 安全问题
 
-如发现安全漏洞，请勿直接提交 Issue 或 PR。参阅 [`SECURITY.md`](SECURITY.md) 中的披露流程，私下联系维护者。
+不要通过公开 Issue 或 Pull Request 披露安全漏洞。请遵循
+[SECURITY.md](SECURITY.md) 中的报告流程。
 
 ## 许可证
 
-许可证由项目权利人选择后通过 `LICENSE` 文件正式声明。在许可证确定前，请遵循仓库根目录 `LICENSE` 文件（如已存在）的条款。
+本项目采用 [Apache License 2.0](LICENSE)。提交代码即表示你有权按该许可证提交
+并分发相关内容。

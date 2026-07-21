@@ -78,21 +78,11 @@
 
 商业版在开源版基础上提供更完善的多账号管理、商机发掘、工作流自动化、专属客服与运维保障。开源版与商业版可独立运行，互不冲突。
 
-## 📋 功能参考
-
-> 📌 **此处预留功能详细介绍位置** 
-
-| 功能模块 | 说明 | 文档/演示 |
-|------|------|--------|
-| _商品搜索_ | _根据商品关键词爬取商品_ | _并可进行AI搬运润色、生图、发布_ |
-| _店铺爬取_ | _根据店铺链接爬取商品_ | _并可进行AI搬运润色、生图、发布_ |
-| _工作流_ | _自动根据设定规则发布商品_ | _可一次性发布多个账号，多个商品_ |
-
 ## 🚀 3 分钟快速上手
 
 > 适合第一次使用的用户。一键脚本会自动生成所有 secrets、bcrypt 密码 hash、`.env` 配置，无需手动创建任何密码文件。
 >
-> 📖 **完整部署教程**（含 Windows/Ubuntu 详细步骤、常见问题、运维命令、进阶配置）：见 [docs/deployment-guide.md](docs/deployment-guide.md)
+> 生产准入、本地开发、备份恢复和迁移维护等专题资料见 [文档索引](docs/README.md)。
 
 ### 前置要求
 - Docker 24+ 与 Docker Compose v2（[安装 Docker](https://docs.docker.com/get-docker/)；Ubuntu 上若未安装，`start.sh` 会自动安装）
@@ -283,9 +273,14 @@ python scripts/production_ops.py --env-file .env restart api web
 
 ## 📚 参考文档
 
+完整的文档分层、维护边界和阅读路径见 [`docs/README.md`](docs/README.md)。
+
 | 文档 | 说明 |
 |------|------|
+| [`docs/README.md`](docs/README.md) | 文档索引与维护规范 |
+| [`docs/development-standards.md`](docs/development-standards.md) | 研发、验证、发布与镜像规范 |
 | [`docs/local-dev-runbook.md`](docs/local-dev-runbook.md) | 本地开发运行手册 |
+| [`docs/production-readiness.md`](docs/production-readiness.md) | 生产发布准入与已知约束 |
 | [`docs/backup-restore.md`](docs/backup-restore.md) | 备份与恢复 |
 | [`apps/api/migrations/README.md`](apps/api/migrations/README.md) | 数据库迁移说明 |
 | [`SECURITY.md`](SECURITY.md) | 安全策略 |
@@ -314,18 +309,6 @@ python scripts/production_ops.py --env-file .env restart api web
 <div align="center">
 
 ![赞助码](screenshots/qr.png)
-
-</div>
-
-## 💬 微信交流群
-
-欢迎加入微信交流群，与更多闲鱼卖家和开发者一起交流使用心得、反馈问题、获取最新动态。
-
-> 📌 **微信群二维码位置预留** — 届时我会在此附上微信群二维码。
-
-<div align="center">
-
-![微信群](screenshots/wechat-group.png)
 
 </div>
 
