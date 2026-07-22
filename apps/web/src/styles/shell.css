@@ -1,0 +1,7 @@
+/* Global styles: shell.css */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  background: linear-gradient(180deg, #f8fbff 0%, #f4f8ff 100%)
+}

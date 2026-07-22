@@ -1,0 +1,120 @@
+/* Global styles: assets.css */
+
+/* visual polish: local SVG assets and normalized line icons */
+.ui-icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -.16em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round
+}
+
+.nav-icon .ui-icon {
+  width: 18px;
+  height: 18px
+}
+
+.config-link .ui-icon {
+  width: 18px;
+  height: 18px
+}
+
+.top-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center
+}
+
+.top-icon .ui-icon {
+  width: 20px;
+  height: 20px
+}
+
+.stat-icon {
+  font-size: 24px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center
+}
+
+.stat-icon .ui-icon {
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.8
+}
+
+.circle-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center
+}
+
+.circle-ico .ui-icon {
+  width: 20px;
+  height: 20px
+}
+
+.hero-art {
+  background-image: url('../assets/illustrations/hero-dashboard.svg') !important;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center
+}
+
+.big-illus {
+  background-image: url('../assets/illustrations/auth-hero.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center
+}
+
+.big-illus:before,
+.big-illus:after {
+  display: none !important
+}
+
+.avatar-img {
+  background-image: url('../assets/avatars/xiaolongguo.svg') !important;
+  background-size: cover !important;
+  background-position: center !important
+}
+
+.product-thumb {
+  background-image: url('../assets/products/product-card.svg') !important;
+  background-size: cover !important;
+  background-position: center
+}
+
+.product-thumb:after {
+  display: none
+}
+
+.brand .brand-mark:not(:has(span))::before {
+  content: "";
+  position: absolute;
+  left: 24px;
+  top: -1px;
+  width: 18px;
+  height: 62px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #0d7fff, #16b7ff);
+  transform: rotate(42deg);
+  box-shadow: 0 6px 18px rgba(13, 107, 255, .28)
+}
+
+.brand .brand-mark:not(:has(span))::after {
+  content: "";
+  position: absolute;
+  left: 24px;
+  top: -1px;
+  width: 18px;
+  height: 62px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #25a5ff, #0362f4);
+  transform: rotate(-42deg);
+  box-shadow: 0 6px 18px rgba(13, 107, 255, .18)
+}

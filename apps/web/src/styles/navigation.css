@@ -1,0 +1,240 @@
+/* Global styles: navigation.css */
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--sidebar);
+  background: rgba(255, 255, 255, .86);
+  border-right: 1px solid var(--line);
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  z-index: 20
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  height: 58px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left
+}
+
+.brand-mark {
+  width: 58px;
+  height: 58px;
+  position: relative
+}
+
+.brand-mark span {
+  position: absolute;
+  left: 24px;
+  top: -1px;
+  width: 18px;
+  height: 62px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #0d7fff, #16b7ff);
+  transform: rotate(42deg);
+  box-shadow: 0 6px 18px rgba(13, 107, 255, .28)
+}
+
+.brand-mark span+span {
+  transform: rotate(-42deg);
+  background: linear-gradient(180deg, #25a5ff, #0362f4)
+}
+
+.brand-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .2px
+}
+
+.brand-sub {
+  font-size: 14px;
+  color: #667491;
+  margin-top: 2px;
+  letter-spacing: 3px
+}
+
+.nav-scroll {
+  overflow: auto;
+  padding-right: 2px;
+  flex: 1
+}
+
+.nav-group {
+  margin: 6px 0
+}
+
+.nav-group-toggle {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 0 11px;
+  color: #263954;
+  font: inherit;
+  font-weight: 700;
+  text-align: left
+}
+
+.nav-group-toggle:hover,
+.nav-group-toggle.contextual {
+  background: #f0f5ff;
+  color: var(--primary)
+}
+
+.nav-group-items {
+  margin: 2px 0 8px
+}
+
+.nav-item {
+  width: 100%;
+  height: 38px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #41506c;
+  padding: 0 11px 0 31px;
+  margin: 2px 0;
+  text-align: left;
+  position: relative
+}
+
+.nav-item:hover {
+  background: #f0f5ff;
+  color: var(--primary)
+}
+
+.nav-item.active {
+  background: linear-gradient(90deg, #0d6bff, #167cff);
+  color: white;
+  box-shadow: 0 10px 20px rgba(13, 107, 255, .22)
+}
+
+.nav-icon {
+  width: 19px;
+  display: inline-flex;
+  justify-content: center;
+  color: inherit;
+  font-weight: 700
+}
+
+.nav-chevron {
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  transition: transform .18s ease
+}
+
+.nav-chevron.expanded {
+  transform: rotate(180deg)
+}
+
+.nav-badge {
+  margin-left: auto;
+  background: #ff5252;
+  color: #fff;
+  border-radius: 99px;
+  font-size: 12px;
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center
+}
+
+.side-user {
+  height: 62px;
+  background: #f4f7fc;
+  border: 1px solid #eaf0f8;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  gap: 10px;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f7a94b, #2ebd8f);
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(33, 49, 81, .12)
+}
+
+.avatar-img {
+  background-image: radial-gradient(circle at 50% 36%, #38342f 0 11%, transparent 12%), radial-gradient(circle at 50% 58%, #f0b071 0 25%, transparent 26%), linear-gradient(135deg, #0c8a71, #f2b75b)
+}
+
+.avatar.small {
+  width: 32px;
+  height: 32px
+}
+
+.side-user-main {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+  flex: 1
+}
+
+.side-user-main strong {
+  font-size: 15px
+}
+
+.side-user-main span,
+.top-user em {
+  font-style: normal;
+  color: #7b879d;
+  font-size: 12px
+}
+
+.online-dot {
+  width: 7px;
+  height: 7px;
+  background: #18c785;
+  border-radius: 50%;
+  display: block
+}
+
+.online-text {
+  color: #13a66a;
+  font-size: 12px
+}
+
+.version {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #9aa5b8;
+  padding: 12px 2px 0
+}

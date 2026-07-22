@@ -1,0 +1,259 @@
+/* Global styles: states.css */
+
+/* Backend integration helpers */
+.boot-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #eef5ff, #f8fbff)
+}
+
+.boot-card {
+  width: 360px;
+  padding: 32px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(36, 84, 168, .14);
+  display: grid;
+  gap: 12px;
+  text-align: center;
+  color: #526079
+}
+
+.boot-card img {
+  max-width: 220px;
+  margin: 0 auto 8px
+}
+
+.boot-card img.boot-brand-icon {
+  width: 84px;
+  height: 84px;
+  object-fit: contain
+}
+
+.boot-card b {
+  font-size: 18px;
+  color: #16233d
+}
+
+.boot-card span {
+  font-size: 13px
+}
+
+.form-error,
+.input-error {
+  color: #ef4444;
+  background: #fff5f5;
+  border: 1px solid #ffd1d1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0 14px;
+  font-weight: 700
+}
+
+.global-notice {
+  margin: 0 0 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #eef5ff;
+  color: #2454a8;
+  font-weight: 700;
+  border: 1px solid #d9e7ff
+}
+
+.global-notice.error {
+  background: #fff5f5;
+  color: #ef4444;
+  border-color: #ffd1d1
+}
+
+.global-notice .retry-btn {
+  margin-left: 12px;
+  padding: 2px 12px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: opacity .2s;
+}
+.global-notice .retry-btn:hover:not(:disabled) { opacity: .8 }
+.global-notice .retry-btn:disabled { opacity: .5; cursor: not-allowed }
+
+.spinning { display: inline-block; animation: xy-spin 0.8s linear infinite }
+@keyframes xy-spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
+
+.global-notice.warn {
+  background: #fff9ed;
+  color: #b46900;
+  border-color: #ffe0a3
+}
+
+.global-notice.info {
+  background: #eef5ff;
+  color: #2454a8;
+  border-color: #d9e7ff
+}
+
+.global-notice.success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0
+}
+
+.empty-state {
+  padding: 24px;
+  text-align: center;
+  color: #8a96aa;
+  background: #f8fbff;
+  border-radius: 14px;
+  border: 1px dashed #dfe8f6
+}
+
+.danger-text {
+  color: #ef4444 !important
+}
+
+.top-user {
+  position: relative;
+  cursor: pointer
+}
+
+.top-user-menu {
+  position: absolute;
+  right: 0;
+  top: 46px;
+  background: #fff;
+  border: 1px solid #e8eef8;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(30, 52, 92, .14);
+  padding: 8px;
+  z-index: 20
+}
+
+.top-user-menu button {
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #ef4444;
+  font-weight: 800
+}
+
+.top-user-menu button:hover {
+  background: #fff5f5
+}
+
+select.input {
+  appearance: auto;
+  background: #fff
+}
+
+.quick-card {
+  cursor: pointer;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left
+}
+
+.base-table img.avatar.small {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover
+}
+
+.base-table img.product-thumb {
+  width: 58px;
+  height: 58px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #edf2f7
+}
+
+button:disabled {
+  opacity: .6;
+  cursor: not-allowed
+}
+
+.xy-modal .manual-actions .app-btn,
+.xy-modal .modal-actions .app-btn {
+  min-width: 96px
+}.table-empty{padding:28px;text-align:center;color:#8a94a6;background:#fbfdff;border-radius:14px}
+
+.mobile-lite{min-height:100vh;padding:24px;background:linear-gradient(180deg,#eef5ff,#f8fbff);box-sizing:border-box;color:#15223a}.mobile-lite-card{background:rgba(255,255,255,.92);border:1px solid #e5edf8;border-radius:24px;padding:22px;box-shadow:0 18px 42px rgba(31,53,94,.10)}.mobile-lite-card.hero{text-align:left}.mobile-lite-card.hero img{width:54px;height:54px;border-radius:16px;display:block;margin-bottom:14px}.mobile-lite-card h2{margin:0 0 8px;font-size:26px}.mobile-lite-card p{margin:0;color:#64748b;line-height:1.7}.mobile-lite-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}.mobile-lite-tile{border:1px solid #e5edf8;background:#fff;border-radius:18px;padding:16px;text-align:left;box-shadow:0 10px 22px rgba(31,53,94,.06)}.mobile-lite-tile b{display:block;font-size:16px;color:#0d6bff;margin-bottom:6px}.mobile-lite-tile span{display:block;font-size:12px;color:#667085;line-height:1.5}.mobile-lite-card.warning{border-color:#fde68a;background:#fffaf0}.mobile-lite-actions{display:flex;gap:10px;margin-top:16px}.mobile-lite-actions button{flex:1;height:44px;border:1px solid #dbe7f5;border-radius:999px;background:#fff;color:#526079;font-weight:700}.mobile-lite-actions .primary{background:#0d6bff;color:#fff;border-color:#0d6bff}@media (max-width:430px){.mobile-lite{padding:16px}.mobile-lite-grid{grid-template-columns:1fr}.mobile-lite-actions{flex-direction:column}}
+
+/* 视觉质感提升：hover/transition/focus */
+.stat-card,
+.card-panel,
+.right-drawer,
+.list-card,
+.detail-card,
+.quick-card,
+.feature-card,
+.preview-card,
+.metric-tile {
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.quick-card:hover,
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 1px 2px rgba(31, 53, 94, .04), 0 12px 32px rgba(31, 53, 94, .10);
+}
+
+.app-btn {
+  transition: transform .12s ease, box-shadow .18s ease, opacity .15s ease;
+}
+
+.app-btn:active:not(:disabled) {
+  transform: scale(.98);
+}
+
+/* 焦点态：键盘导航可见环 */
+.input:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+.app-btn:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+/* 圆角层级：panel 14px / sub-card 10px / input 7px / chip 6px */
+.metric-tile { border-radius: 10px; }
+.chip { border-radius: 6px; }
+
+/* 空态统一风格 */
+.empty-state,
+.empty-mini,
+.empty-box,
+.empty-placeholder,
+.table-empty {
+  padding: 24px;
+  text-align: center;
+  color: #8a96aa;
+  background: linear-gradient(135deg, #fbfdff, #f6f9ff);
+  border: 1px dashed #cfd9ea;
+  border-radius: 14px;
+}
+.xya-legal-notice {
+  width: min(520px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid #d9e4f4;
+  border-radius: 20px;
+  color: #1f3557;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(25, 48, 86, .24);
+}
+
+.xya-legal-notice::backdrop { background: rgba(15, 30, 55, .46); }
+.xya-legal-notice h1 { margin: 0 0 12px; font-size: 22px; }
+.xya-legal-notice p { margin: 0; color: #5c6f8d; line-height: 1.75; }
+.xya-legal-notice button { margin-top: 20px; min-height: 42px; padding: 0 18px; border: 0; border-radius: 11px; background: #0d6bff; color: #fff; font-weight: 800; }

@@ -1,0 +1,85 @@
+/* Global styles: workspace.css */
+
+.main {
+  margin-left: var(--sidebar);
+  width: calc(100% - var(--sidebar));
+  padding: 22px 28px 20px;
+  min-height: 100vh
+}
+
+.topbar {
+  position: fixed;
+  right: 22px;
+  top: 18px;
+  height: 42px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  z-index: 40
+}
+
+.top-icon {
+  border: 0;
+  background: transparent;
+  color: #17213d;
+  font-size: 20px;
+  position: relative;
+  width: 28px;
+  height: 28px
+}
+
+.bell span {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  background: #ff5252;
+  color: #fff;
+  border-radius: 8px;
+  min-width: 18px;
+  height: 16px;
+  line-height: 16px;
+  font-size: 10px
+}
+
+.top-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700
+}
+
+.top-user em {
+  display: block;
+  margin-left: -4px
+}
+
+.page-head {
+  height: 62px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-right: 380px;
+  position: relative;
+  z-index: 35
+}
+
+.page-head h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: .3px
+}
+
+.page-head p {
+  margin: 10px 0 0;
+  color: #667491;
+  font-size: 15px
+}
+
+.head-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center
+}
