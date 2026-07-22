@@ -7,9 +7,9 @@ import { curateBuiltPublicAssets } from './scripts/public-assets.mjs'
 
 const buildDate = new Date().toISOString()
 const webRoot = path.dirname(fileURLToPath(import.meta.url))
-const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:15177'
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:12401'
 const uploadsProxyTarget = process.env.VITE_UPLOAD_PROXY_TARGET || apiProxyTarget
-const webDevPort = Number.parseInt(process.env.XYA_WEB_PORT || '15176', 10)
+const webDevPort = Number.parseInt(process.env.XYA_WEB_PORT || '12400', 10)
 const webDevHost = process.env.XYA_WEB_HOST || '127.0.0.1'
 
 if (!Number.isInteger(webDevPort) || webDevPort < 1 || webDevPort > 65535) {

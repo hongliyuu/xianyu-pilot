@@ -36,9 +36,9 @@ OPTIONAL_FILE_BACKED_SECRET_FIELDS = (
 class Settings(BaseSettings):
     app_name: str = "xianyu-pilot-api"
     server_host: str = "127.0.0.1"
-    # Isolated local default. Production Compose explicitly overrides this
+    # Local development default. Production Compose explicitly overrides this
     # with its private, unpublished container port (12401).
-    server_port: int = 15177
+    server_port: int = 12401
 
     db_path: str = "../dbdata/xianyu_pilot.db"
     uploads_dir: str = str(DEFAULT_UPLOADS_DIR)
@@ -163,7 +163,7 @@ class Settings(BaseSettings):
     admin_password_hash_file: str = Field(default="", exclude=True, repr=False)
 
     # crawler-service 基础地址（慢速搜索 / 浏览器爬取场景使用）
-    crawler_base_url: str = "http://localhost:15178"
+    crawler_base_url: str = "http://localhost:12402"
 
     # OpenAI 兼容 Embedding 服务配置（RAG 检索增强）
     embedding_api_key: str = Field(default="", exclude=True, repr=False)

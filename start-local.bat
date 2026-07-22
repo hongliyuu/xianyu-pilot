@@ -5,15 +5,12 @@ setlocal
 cd /d "%~dp0"
 
 if not exist .env (
-    echo .env not found, creating it from .env.development.example...
-    copy .env.development.example .env >nul
-    echo Local .env created. Configure ADMIN_PASSWORD_HASH and local database credentials, then run this script again.
+    echo .env was not found. Run scripts\init-local-dev.ps1 first.
     exit /b 1
 )
 
-where python >nul 2>nul
-if errorlevel 1 (
-    echo Python was not found in PATH.
+if not exist apps\api\.venv\Scripts\python.exe (
+    echo Local API virtual environment was not found. Run scripts\bootstrap-local-dev.ps1 first.
     exit /b 1
 )
 
@@ -23,12 +20,22 @@ if errorlevel 1 (
     exit /b 1
 )
 
-rem Keep the open-source development stack isolated from other local products.
-set "XYA_WEB_PORT=15176"
+if not exist apps\web\node_modules\vite\bin\vite.js (
+    echo Web dependencies were not found. Run scripts\bootstrap-local-dev.ps1 first.
+    exit /b 1
+)
+
+if not exist apps\crawler\node_modules\typescript\bin\tsc (
+    echo Crawler dependencies were not found. Run scripts\bootstrap-local-dev.ps1 first.
+    exit /b 1
+)
+
+rem Keep local source services aligned with the Docker service ports.
+set "XYA_WEB_PORT=12400"
 set "XYA_WEB_HOST=127.0.0.1"
 set "SERVER_HOST=127.0.0.1"
-set "SERVER_PORT=15177"
-set "CRAWLER_PORT=15178"
+set "SERVER_PORT=12401"
+set "CRAWLER_PORT=12402"
 set "PORT=%CRAWLER_PORT%"
 set "HOST=127.0.0.1"
 set "CRAWLER_BASE_URL=http://127.0.0.1:%CRAWLER_PORT%"
@@ -40,7 +47,7 @@ set "CRAWLER_ALLOWED_ORIGINS=http://127.0.0.1:%XYA_WEB_PORT%,http://localhost:%X
 
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\local-dev.ps1 preflight
 if errorlevel 1 (
-    echo One or more isolated local ports are already in use. Nothing was started.
+    echo One or more local ports are already in use. Nothing was started.
     exit /b 1
 )
 
@@ -51,5 +58,5 @@ if not "%START_EXIT%"=="0" (
     exit /b %START_EXIT%
 )
 
-echo Local stack is ready. Use status-local.bat or stop-local.bat to manage it.
+echo Local stack is ready. Use scripts\local-dev.ps1 status or stop to manage it.
 exit /b 0

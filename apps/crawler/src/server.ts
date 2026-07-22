@@ -20,8 +20,8 @@ const SERVICE_NAME = 'xianyu-pilot-crawler'
 const NODE_ENV = String(process.env.NODE_ENV || 'development').trim().toLowerCase()
 const IS_PRODUCTION = ['production', 'prod', 'staging', 'stage'].includes(NODE_ENV)
 const PORT = process.env.CRAWLER_PORT
-  ? readIntegerEnv('CRAWLER_PORT', 15178, 1, 65535)
-  : readIntegerEnv('PORT', 15178, 1, 65535)
+  ? readIntegerEnv('CRAWLER_PORT', 12402, 1, 65535)
+  : readIntegerEnv('PORT', 12402, 1, 65535)
 const HOST = String(process.env.HOST || '127.0.0.1').trim() || '127.0.0.1'
 const JSON_LIMIT_BYTES = readByteSizeEnv('CRAWLER_JSON_LIMIT', 256 * 1024, 1024, 1024 * 1024)
 const RATE_LIMIT_WINDOW_MS = readIntegerEnv('CRAWLER_RATE_LIMIT_WINDOW_MS', 60_000, 1_000, 3_600_000)

@@ -12,9 +12,9 @@ $ApiDir = Join-Path $Root 'apps\api'
 $CrawlerDir = Join-Path $Root 'apps\crawler'
 $WebDir = Join-Path $Root 'apps\web'
 
-$ApiPort = 15177
-$CrawlerPort = 15178
-$WebPort = 15176
+$ApiPort = 12401
+$CrawlerPort = 12402
+$WebPort = 12400
 
 $ApiPidFile = Join-Path $PidDir 'api.pid'
 $CrawlerPidFile = Join-Path $PidDir 'crawler.pid'
@@ -106,6 +106,24 @@ function Require-Command([string]$Name) {
     return $command.Source
 }
 
+function Resolve-LocalPython() {
+    $pythonPath = Join-Path $ApiDir '.venv\Scripts\python.exe'
+    if (-not (Test-Path -LiteralPath $pythonPath -PathType Leaf)) {
+        throw "Local API virtual environment was not found: $pythonPath. Run scripts\\bootstrap-local-dev.ps1 first."
+    }
+    $resolvedPath = (Resolve-Path -LiteralPath $pythonPath).Path
+    $version = (& $resolvedPath -c 'import sys; print(*sys.version_info[:2], sep=chr(46))').Trim()
+    try {
+        $supported = [version]$version -ge [version]'3.11'
+    } catch {
+        $supported = $false
+    }
+    if ($LASTEXITCODE -ne 0 -or -not $supported) {
+        throw "Local API virtual environment must use Python 3.11 or newer, but reports $version. Recreate it with scripts\\bootstrap-local-dev.ps1."
+    }
+    return $resolvedPath
+}
+
 function Invoke-CheckedCommand(
     [string]$Name,
     [string]$CommandPath,
@@ -161,6 +179,40 @@ function Get-PortOwningProcessId([int]$Port) {
     return $null
 }
 
+function Test-ProcessTreeOwnership([int]$RootPid, [int]$CandidatePid) {
+    if (-not $RootPid -or -not $CandidatePid) {
+        return $false
+    }
+    if ($RootPid -eq $CandidatePid) {
+        return $true
+    }
+
+    $currentPid = $CandidatePid
+    $visited = @{}
+    for ($depth = 0; $depth -lt 32; $depth++) {
+        if ($visited.ContainsKey($currentPid)) {
+            return $false
+        }
+        $visited[$currentPid] = $true
+
+        try {
+            $process = Get-CimInstance Win32_Process -Filter "ProcessId = $currentPid" -ErrorAction Stop
+        } catch {
+            return $false
+        }
+        if (-not $process -or -not $process.ParentProcessId) {
+            return $false
+        }
+
+        $parentPid = [int]$process.ParentProcessId
+        if ($parentPid -eq $RootPid) {
+            return $true
+        }
+        $currentPid = $parentPid
+    }
+    return $false
+}
+
 function Assert-LocalPortsAvailable() {
     $services = @(
         @{ Name = 'Web'; Port = $WebPort },
@@ -175,9 +227,9 @@ function Assert-LocalPortsAvailable() {
         }
     }
     if ($conflicts.Count -gt 0) {
-        throw "Isolated local port conflict: $($conflicts -join ', '). Stop the conflicting process or choose another complete port set."
+        throw "Local port conflict: $($conflicts -join ', '). Stop the conflicting process before starting the local stack."
     }
-    Write-Host "Isolated local ports are available: Web=$WebPort, API=$ApiPort, Crawler=$CrawlerPort."
+    Write-Host "Local ports are available: Web=$WebPort, API=$ApiPort, Crawler=$CrawlerPort."
 }
 
 function Get-AliveProcess([string]$PidFile, [int]$Port = 0) {
@@ -189,7 +241,7 @@ function Get-AliveProcess([string]$PidFile, [int]$Port = 0) {
         $process = Get-Process -Id $pidValue -ErrorAction Stop
         if ($Port -gt 0) {
             $ownerPid = Get-PortOwningProcessId $Port
-            if (-not $ownerPid -or $ownerPid -ne $pidValue) {
+            if (-not (Test-ProcessTreeOwnership -RootPid $pidValue -CandidatePid $ownerPid)) {
                 Remove-PidFile $PidFile
                 return $null
             }
@@ -249,8 +301,8 @@ function Start-ServiceProcess(
     try {
         Wait-Port -Port $Port -TimeoutSeconds $TimeoutSeconds -Name $Name
         $ownerPid = Get-PortOwningProcessId $Port
-        if ($ownerPid -ne $process.Id) {
-            throw "$Name port $Port was acquired by unexpected PID $ownerPid instead of managed PID $($process.Id)."
+        if (-not (Test-ProcessTreeOwnership -RootPid $process.Id -CandidatePid $ownerPid)) {
+            throw "$Name port $Port was acquired by unexpected PID $ownerPid outside managed process tree rooted at PID $($process.Id)."
         }
         Write-Host "$Name started on port $Port (PID $($process.Id))."
     } catch {
@@ -288,10 +340,10 @@ function Stop-ServiceProcess([string]$Name, [string]$PidFile, [int]$Port) {
         return
     }
 
-    if (-not $ownerPid -or $ownerPid -ne $pidValue) {
+    if (-not (Test-ProcessTreeOwnership -RootPid $pidValue -CandidatePid $ownerPid)) {
         Remove-PidFile $PidFile
         if ($ownerPid) {
-            Write-Warning "$Name PID file did not match port owner $ownerPid; the unmanaged process was preserved."
+            Write-Warning "$Name port owner $ownerPid was outside the managed process tree; the process was preserved."
         } else {
             Write-Host "$Name is not running; removed stale PID file."
         }
@@ -542,8 +594,7 @@ function Show-Status() {
         Write-Host ("{0,-8} pid={1,-6} portOpen={2,-5} url={3}" -f $row.Name, $pidText, $portOpen, $row.Url)
     }
 
-    $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
-    $expectedExecutable = if ($pythonCommand) { $pythonCommand.Source } else { $null }
+    $expectedExecutable = Resolve-LocalPython
     $scheduler = Get-SchedulerProcessState -ExpectedExecutable $expectedExecutable
     $schedulerHealthy = $false
     if ($scheduler.Alive -and $scheduler.Owned) {
@@ -584,7 +635,7 @@ switch ($Action) {
         $env:CRAWLER_ALLOWED_ORIGINS = $env:CORS_ALLOWED_ORIGINS
 
         Assert-LocalPortsAvailable
-        $python = Require-Command 'python'
+        $python = Resolve-LocalPython
         $node = Require-Command 'node'
         $npm = Require-Command 'npm.cmd'
 
@@ -612,8 +663,7 @@ switch ($Action) {
         }
     }
     'stop' {
-        $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
-        $expectedExecutable = if ($pythonCommand) { $pythonCommand.Source } else { $null }
+        $expectedExecutable = Resolve-LocalPython
         $stopErrors = @()
         try { Stop-SchedulerProcess -ExpectedExecutable $expectedExecutable } catch { $stopErrors += $_.Exception.Message }
         try { Stop-ServiceProcess -Name 'Web' -PidFile $WebPidFile -Port $WebPort } catch { $stopErrors += $_.Exception.Message }
