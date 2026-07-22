@@ -57,7 +57,9 @@ record so a partial script can never claim success.
    row counts, free disk, execution/lock duration, and the largest table rewrite.
    Migration 005 includes multiple `ALTER TABLE` operations and full-table
    compatibility backfills; assume it can hold metadata/table locks until target
-   data volume measurements prove otherwise. Migration 008 takes ownership of
+   data volume measurements prove otherwise. Migration 031 creates the missing
+   `xianyu_message` compatibility table required by legacy message-context code;
+   it is non-destructive and creates no historical message copies. Migration 008 takes ownership of
    the business-setting and notification tables that older builds created lazily
    during API requests; apply it before running API/worker identities without DDL
    privileges. Migration 009 adds the real-time delivery attempt/lease state and

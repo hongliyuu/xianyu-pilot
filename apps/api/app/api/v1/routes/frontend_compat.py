@@ -3370,20 +3370,25 @@ async def compat_dashboard_order_message_trend(
     """Compat: GET /dashboard/order-message-trend"""
     from datetime import date, timedelta
     from sqlalchemy import cast, Date, func, select
-    from ....models.entities import XianyuMessage
+    from ....models.entities import AiAutoReplyAttempt
 
     today = date.today()
     date_labels = [(today - timedelta(days=i)).isoformat() for i in range(days - 1, -1, -1)]
     start_date = today - timedelta(days=days - 1)
 
+    reply_event_time = func.coalesce(
+        AiAutoReplyAttempt.message_confirmed_at,
+        AiAutoReplyAttempt.local_confirmed_at,
+        AiAutoReplyAttempt.created_time,
+    )
     reply_rows_result = await db.execute(
         select(
-            cast(XianyuMessage.created_time, Date).label("d"),
+            cast(reply_event_time, Date).label("d"),
             func.count().label("c")
         ).where(
-            XianyuMessage.is_auto_reply == 1,
-            cast(XianyuMessage.created_time, Date) >= start_date
-        ).group_by(cast(XianyuMessage.created_time, Date))
+            AiAutoReplyAttempt.state.in_(["message_sent", "confirmed"]),
+            cast(reply_event_time, Date) >= start_date
+        ).group_by(cast(reply_event_time, Date))
     )
     reply_map = {str(row.d): row.c for row in reply_rows_result}
 

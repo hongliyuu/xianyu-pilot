@@ -7,7 +7,12 @@ from sqlalchemy import select, func, cast, Date, Float, or_
 from ....core.database import get_db
 from ....core.response import ResultObject
 from ....models.entities import (
-    XianyuAccount, XianyuGoods, XianyuTradeOrder, XianyuMessage, DeliveryRecord
+    AiAutoReplyAttempt,
+    DeliveryRecord,
+    XianyuAccount,
+    XianyuChatMessage,
+    XianyuGoods,
+    XianyuTradeOrder,
 )
 from ....schemas.dashboard import DashboardStatsRespDTO
 from ..deps import get_current_user
@@ -118,30 +123,35 @@ async def get_dashboard_summary(
             db, start=day_start, end=day_end, account_id=account_id
         )
 
-        # AI 自动回复数
+        # AI replies are durably recorded as attempts. xianyu_message is only
+        # a legacy compatibility projection and does not contain AI replies.
+        ai_reply_event_time = func.coalesce(
+            AiAutoReplyAttempt.message_confirmed_at,
+            AiAutoReplyAttempt.local_confirmed_at,
+            AiAutoReplyAttempt.created_time,
+        )
         reply_filters = [
-            XianyuMessage.is_auto_reply == 1,
-            XianyuMessage.deleted == 0,
-            XianyuMessage.created_time >= day_start,
-            XianyuMessage.created_time < day_end,
+            AiAutoReplyAttempt.state.in_(["message_sent", "confirmed"]),
+            ai_reply_event_time >= day_start,
+            ai_reply_event_time < day_end,
         ]
         if account_id is not None:
-            reply_filters.append(XianyuMessage.account_id == account_id)
+            reply_filters.append(AiAutoReplyAttempt.account_id == account_id)
         auto_reply_result = await db.execute(
-            select(func.count()).select_from(XianyuMessage).where(*reply_filters)
+            select(func.count()).select_from(AiAutoReplyAttempt).where(*reply_filters)
         )
         auto_reply_count = auto_reply_result.scalar() or 0
 
-        # 消息总数（用于趋势明细对比）
+        # xianyu_chat_message is the authoritative persisted WebSocket stream.
         message_filters = [
-            XianyuMessage.deleted == 0,
-            XianyuMessage.created_time >= day_start,
-            XianyuMessage.created_time < day_end,
+            XianyuChatMessage.deleted == 0,
+            XianyuChatMessage.created_time >= day_start,
+            XianyuChatMessage.created_time < day_end,
         ]
         if account_id is not None:
-            message_filters.append(XianyuMessage.account_id == account_id)
+            message_filters.append(XianyuChatMessage.account_id == account_id)
         message_count_result = await db.execute(
-            select(func.count()).select_from(XianyuMessage).where(*message_filters)
+            select(func.count()).select_from(XianyuChatMessage).where(*message_filters)
         )
         message_count = message_count_result.scalar() or 0
 
@@ -278,20 +288,24 @@ async def get_dashboard_sales_trend(
         )
         fail_map = {str(row.d): row.c for row in fail_rows_result}
 
-        # 每日 AI 回复数
+        # See the summary endpoint for the source-of-truth rationale.
+        ai_reply_event_time = func.coalesce(
+            AiAutoReplyAttempt.message_confirmed_at,
+            AiAutoReplyAttempt.local_confirmed_at,
+            AiAutoReplyAttempt.created_time,
+        )
         reply_filters = [
-            XianyuMessage.is_auto_reply == 1,
-            XianyuMessage.deleted == 0,
-            cast(XianyuMessage.created_time, Date) >= start_date,
-            cast(XianyuMessage.created_time, Date) < range_end,
+            AiAutoReplyAttempt.state.in_(["message_sent", "confirmed"]),
+            cast(ai_reply_event_time, Date) >= start_date,
+            cast(ai_reply_event_time, Date) < range_end,
         ]
         if account_id is not None:
-            reply_filters.append(XianyuMessage.account_id == account_id)
+            reply_filters.append(AiAutoReplyAttempt.account_id == account_id)
         reply_rows_result = await db.execute(
             select(
-                cast(XianyuMessage.created_time, Date).label("d"),
+                cast(ai_reply_event_time, Date).label("d"),
                 func.count().label("c")
-            ).where(*reply_filters).group_by(cast(XianyuMessage.created_time, Date))
+            ).where(*reply_filters).group_by(cast(ai_reply_event_time, Date))
         )
         reply_map = {str(row.d): row.c for row in reply_rows_result}
 
@@ -315,19 +329,19 @@ async def get_dashboard_sales_trend(
         )
         order_map = {str(row.d): row.c for row in order_rows_result}
 
-        # 每日消息总数
+        # xianyu_chat_message is the authoritative persisted WebSocket stream.
         msg_filters = [
-            XianyuMessage.deleted == 0,
-            cast(XianyuMessage.created_time, Date) >= start_date,
-            cast(XianyuMessage.created_time, Date) < range_end,
+            XianyuChatMessage.deleted == 0,
+            cast(XianyuChatMessage.created_time, Date) >= start_date,
+            cast(XianyuChatMessage.created_time, Date) < range_end,
         ]
         if account_id is not None:
-            msg_filters.append(XianyuMessage.account_id == account_id)
+            msg_filters.append(XianyuChatMessage.account_id == account_id)
         msg_rows_result = await db.execute(
             select(
-                cast(XianyuMessage.created_time, Date).label("d"),
+                cast(XianyuChatMessage.created_time, Date).label("d"),
                 func.count().label("c")
-            ).where(*msg_filters).group_by(cast(XianyuMessage.created_time, Date))
+            ).where(*msg_filters).group_by(cast(XianyuChatMessage.created_time, Date))
         )
         msg_map = {str(row.d): row.c for row in msg_rows_result}
 
