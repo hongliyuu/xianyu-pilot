@@ -31,6 +31,7 @@
 - **错误文案带下一步建议**：`friendlyError.js` 扩展数据库/Redis/WebSocket/Token 失效/同步失败等错误的文案，直接告诉用户"下一步该怎么做"
 
 ### 优化
+- **侧栏导航层级**：一级菜单调整为可展开的业务分类，页面入口统一放入二级菜单；按账号接入、商品运营、客户订单、发货履约、自动化运营和系统支持重组入口，并将通知设置纳入设置页导航。
 - **商品管理页面健壮性**：pollSyncProgress 增加连续失败熔断（3次即抛错）与严格响应校验（status 白名单/pct 范围[0,100]/对象类型校验）；init 改为分步容错加载（账号失败不阻塞后续）；loadGoodsStats 严格校验排除 null/undefined/空字符串；syncAllAccounts 进度防倒退（删除每账号 progress=0 重置）；batchDeleteProducts 增加 warnings 分类（remote_confirmed/warn 类型记为需人工核对而非失败）
 - **订单管理页面严格校验**：syncCurrentOrder 增加 data.ok 布尔校验与成功/失败分支；selectOrder 增加 id 匹配校验与 ordersAvailable 前置检查，去除 row 回退；新增 detailLoadError 独立错误状态；syncAccountOrders 增加响应格式校验；openManualDelivery 利用 selectOrder 返回值
 - **发货记录页面严格验证**：load() 改用 recordsOfOrThrow 替代 recordsOf（异常时抛错而非静默降级为空列表）

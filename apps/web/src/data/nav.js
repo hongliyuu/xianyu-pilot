@@ -1,53 +1,78 @@
 export const navGroups = [
   {
-    title: '概览',
+    key: 'overview',
+    title: '工作台',
+    icon: 'dashboard',
     items: [
-      { key: 'dashboard', label: '导航面板', icon: 'dashboard' },
-      { key: 'data', label: '数据面板', icon: 'data' },
+      { key: 'dashboard', label: '运营总览', icon: 'dashboard' },
+      { key: 'data', label: '数据分析', icon: 'data' },
     ],
   },
   {
-    title: '账号与商品',
+    key: 'account-management',
+    title: '账号接入',
+    icon: 'account',
     items: [
-      { key: 'accounts', label: '闲鱼账号', icon: 'account' },
+      { key: 'accounts', label: '账号列表', icon: 'account' },
       { key: 'connections', label: '连接管理', icon: 'link' },
-      { key: 'products', label: '商品管理', icon: 'product' },
-      { key: 'orders', label: '订单管理', icon: 'record' },
-      { key: 'product-publish', label: '发布商品', icon: 'publish', child: true },
+      { key: 'slider-solve-records', label: '滑块求解记录', icon: 'shield' },
     ],
   },
   {
-    title: '消息',
+    key: 'product-management',
+    title: '商品运营',
+    icon: 'product',
+    items: [
+      { key: 'products', label: '商品列表', icon: 'product' },
+      { key: 'product-publish', label: '发布商品', icon: 'publish' },
+    ],
+  },
+  {
+    key: 'customer-orders',
+    title: '客户与订单',
+    icon: 'chat',
     items: [
       { key: 'messages', label: '在线消息', icon: 'chat' },
+      { key: 'orders', label: '订单管理', icon: 'record' },
     ],
   },
   {
-    title: '自动化',
+    key: 'fulfillment',
+    title: '发货履约',
+    icon: 'truck',
     items: [
       { key: 'auto-delivery', label: '自动发货', icon: 'truck' },
       { key: 'card-warehouse', label: '卡密仓库', icon: 'key' },
-      { key: 'delivery-source-library', label: '货源库', icon: 'board', child: true },
-      { key: 'delivery-statement', label: '发货声明', icon: 'board', child: true },
+      { key: 'delivery-source-library', label: '货源库', icon: 'board' },
+      { key: 'delivery-statement', label: '发货声明', icon: 'board' },
       { key: 'delivery-records', label: '发货记录', icon: 'record' },
-      { key: 'scheduled-tasks', label: '定时任务', icon: 'clock' },
-      { key: 'auto-reply', label: '自动回复', icon: 'reply' },
-      { key: 'slider-solve-records', label: '滑块求解', icon: 'shield' },
     ],
   },
   {
-    title: '系统',
+    key: 'automation',
+    title: '自动化运营',
+    icon: 'reply',
     items: [
+      { key: 'scheduled-tasks', label: '定时任务', icon: 'clock' },
+      { key: 'auto-reply', label: '自动回复', icon: 'reply' },
+    ],
+  },
+  {
+    key: 'system-support',
+    title: '系统与支持',
+    icon: 'settings',
+    items: [
+      { key: 'settings-notify', label: '通知设置', icon: 'bell' },
+      { key: 'settings-system', label: '系统设置', icon: 'settings' },
       { key: 'logs', label: '操作日志', icon: 'log' },
       { key: 'feedback', label: '反馈建议', icon: 'reply' },
       { key: 'ad-application', label: '广告申请', icon: 'opportunity' },
-      { key: 'settings-notify', label: '通知设置', icon: 'bell' },
-      { key: 'settings-system', label: '系统设置', icon: 'settings' },
     ],
   },
 ]
 
 export const settingsTabs = [
+  { key: 'settings-notify', label: '通知设置', icon: 'bell' },
   { key: 'settings-ai-cs', label: 'AI 客服配置', icon: 'message' },
   { key: 'settings-system', label: '系统配置', icon: 'settings' },
   { key: 'settings-amap', label: '高德地图', icon: 'map' },
