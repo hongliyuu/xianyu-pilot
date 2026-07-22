@@ -38,6 +38,7 @@
 - **账号鉴权工具增强**：accountAuth.js 新增 pickPreferredAccount（智能账号选择）、accountWsConnectionState（WS 三态）、resolveAccountAuthDisplayState（Cookie+WS 综合状态）、shouldAttemptAccountWebSocketStart
 
 ### 修复
+- **全局请求状态残留**：前端现在使用发起请求时的请求 ID 结束加载状态，避免 Nginx 重写上游请求 ID 后，“正在同步数据...”提示持续显示。
 - **生产密钥权限校验修复**：预检现在允许 Compose 所需的 `secrets/` 目录 `0700`、文件 `0644` 组合，同时继续拒绝公开目录或可被其他用户写入的密钥文件。
 - **生产预检警告修复**：修正未配置 `PUBLIC_BASE_URL` 时调用错误方法导致 `./deploy.sh up` 中断的问题。
 - **仓库与镜像地址修正**：克隆地址、版本检查、Release 链接和 GHCR 镜像命名空间统一指向 `hongliyuu/xianyu-pilot`。

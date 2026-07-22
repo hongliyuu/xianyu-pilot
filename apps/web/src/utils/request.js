@@ -109,8 +109,11 @@ request.interceptors.response.use(
     const config = response.config
     const url = config?.url || ''
     const requestId = requestIdOf(config, response)
+    // Nginx assigns its own request ID upstream. The UI lifecycle must use the
+    // ID emitted at request start, otherwise a completed request stays pending.
+    const lifecycleRequestId = requestIdOf(config)
     if (config?.uiMode !== REQUEST_UI_MODES.SILENT) {
-      emit('xya-request-end', requestUiDetail(config, { requestId, url }))
+      emit('xya-request-end', requestUiDetail(config, { requestId: lifecycleRequestId, url }))
     }
 
     if (!res || typeof res !== 'object' || !Object.prototype.hasOwnProperty.call(res, 'code')) {
@@ -168,9 +171,13 @@ request.interceptors.response.use(
     const config = error?.config
     const status = error?.response?.status
     const requestId = requestIdOf(config, error?.response)
+    const lifecycleRequestId = requestIdOf(config)
     const responseBody = error?.response?.data
     if (config?.uiMode !== REQUEST_UI_MODES.SILENT) {
-      emit('xya-request-end', requestUiDetail(config, { requestId, url: config?.url || '' }))
+      emit('xya-request-end', requestUiDetail(config, {
+        requestId: lifecycleRequestId,
+        url: config?.url || ''
+      }))
     }
 
     if (error?.code === 'ECONNABORTED' || /timeout/i.test(error?.message || '')) {
