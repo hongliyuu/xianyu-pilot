@@ -46,7 +46,7 @@ class AccountProfileDTO(CamelModel):
     id: Optional[int] = None
     # 新实体字段
     external_uid: Optional[str] = None       # 原 unb
-    nickname: Optional[str] = None            # 原 display_name
+    nickname: Optional[str] = None
     avatar_url: Optional[str] = None          # 原 avatar
     remark: Optional[str] = None              # 原 account_note
     province: Optional[str] = None
@@ -65,10 +65,9 @@ class AccountProfileDTO(CamelModel):
     fish_shop_user: Optional[int] = None
     status: Optional[int] = None
     created_time: Optional[str] = None
-    # 向后兼容字段（前端可能仍在使用）
+    # 保留的 API 字段
     unb: Optional[str] = None
     account_note: Optional[str] = None
-    display_name: Optional[str] = None
     avatar: Optional[str] = None
     # 旧字段保留但置空
     proxy_type: Optional[str] = None

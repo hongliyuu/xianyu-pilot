@@ -12,7 +12,7 @@ export function formatMoney(value) {
 }
 
 export function accountName(account) {
-  return account?.accountNote || account?.nickname || account?.displayName || account?.externalUid || account?.unb || `账号 ${account?.id || ''}`
+  return account?.accountNote || account?.nickname || account?.externalUid || account?.unb || `账号 ${account?.id || ''}`
 }
 
 export function shortText(value, length = 28) {

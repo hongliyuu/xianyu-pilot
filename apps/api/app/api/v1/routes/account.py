@@ -54,10 +54,9 @@ def account_to_dto(account: XianyuAccount) -> AccountProfileDTO:
         fish_shop_user=account.fish_shop_user,
         status=account.status,
         created_time=str(account.created_time) if account.created_time else None,
-        # 向后兼容字段
+        # 保留的 API 字段
         unb=account.external_uid,
         account_note=account.remark,
-        display_name=account.nickname,
         avatar=account.avatar_url,
         proxy_password="***",
     )

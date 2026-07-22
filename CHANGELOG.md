@@ -39,6 +39,8 @@
 - **账号鉴权工具增强**：accountAuth.js 新增 pickPreferredAccount（智能账号选择）、accountWsConnectionState（WS 三态）、resolveAccountAuthDisplayState（Cookie+WS 综合状态）、shouldAttemptAccountWebSocketStart
 
 ### 修复
+- **账号昵称字段收敛**：移除将 `nickname` 重复输出为 `displayName` 或 `display_name` 的兼容别名，账号名称只使用昵称字段。
+- **发货记录查询错误**：移除未定义的卖家展示名列，统一返回已有的卖家昵称，避免列表和详情查询返回 500。
 - **数据分析页面统计错误**：改用消息和 AI 自动回复的权威记录表统计，并补齐缺失的兼容消息表，避免汇总和销售趋势接口返回 500。
 - **Compose secret 告警**：移除文件型 secret 挂载中被 Compose 忽略的 `uid`、`gid` 和 `mode` 属性，避免部署时产生重复兼容性警告。
 - **顶部工具栏不可点击**：提高右上角通知、帮助、全屏和用户菜单的层级，避免透明页头遮挡其点击事件。

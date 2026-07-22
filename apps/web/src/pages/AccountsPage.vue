@@ -147,7 +147,7 @@
     </section>
 
     <!-- 闲鱼主页资料（刷新资料后展示） -->
-    <section v-if="selected.displayName || selected.followers != null || selected.soldCount != null" class="profile-stats-card">
+    <section v-if="selected.nickname || selected.followers != null || selected.soldCount != null" class="profile-stats-card">
       <h4>闲鱼主页资料</h4>
 
       <div v-if="selected.introduction" class="profile-intro">
@@ -402,7 +402,7 @@
             <p>3. {{ qr.mode === 'rescan' ? '系统会把新的登录 Cookie 回写到当前账号并刷新状态' : '系统自动添加账号并刷新资料' }}</p>
             <div class="session-box">
               <h4>会话信息</h4>
-              <div v-if="qr.accountId"><span>目标账号：</span><b>{{ selected?.nickname || selected?.displayName || selected?.externalUid || qr.accountId }}</b></div>
+              <div v-if="qr.accountId"><span>目标账号：</span><b>{{ selected?.nickname || selected?.externalUid || qr.accountId }}</b></div>
               <div><span>会话 ID：</span><b>{{ qr.sessionId || '-' }}</b></div>
               <div><span>当前状态：</span><b>{{ qr.status || '-' }}</b><button class="inline-link" @click="startQrLogin"><Icon name="refresh" /> 生成/刷新二维码</button></div>
             </div>
@@ -470,7 +470,7 @@
         <button class="modal-close" @click="closeModal"><Icon name="close" /></button>
         <h2>编辑账号 Cookie</h2>
         <div class="edit-account-info">
-          <span>账号：</span><b>{{ selected?.nickname || selected?.displayName || selected?.externalUid || selected?.unb || selected?.id }}</b>
+          <span>账号：</span><b>{{ selected?.nickname || selected?.externalUid || selected?.unb || selected?.id }}</b>
           <span v-if="selected?.unb" class="current-unb-tag">UNB: {{ maskValue(selected.unb) }}</span>
         </div>
         <label class="field-label required">Cookie <span>必填</span></label>
@@ -534,7 +534,7 @@
         <button class="modal-close" @click="closeModal"><Icon name="close" /></button>
         <h2>自动评价</h2>
         <div class="edit-account-info">
-          <span>账号：</span><b>{{ selected?.nickname || selected?.displayName || selected?.externalUid || selected?.id || '-' }}</b>
+          <span>账号：</span><b>{{ selected?.nickname || selected?.externalUid || selected?.id || '-' }}</b>
         </div>
         <label class="auto-rate-toggle">
           <input v-model="autoRateForm.enabled" type="checkbox" :disabled="!autoRateLoaded">
@@ -582,7 +582,7 @@
         <button class="modal-close" @click="closeModal"><Icon name="close" /></button>
         <h2>消息等待 / 求小红花</h2>
         <div class="edit-account-info">
-          <span>账号：</span><b>{{ selected?.nickname || selected?.displayName || selected?.externalUid || selected?.id || '-' }}</b>
+          <span>账号：</span><b>{{ selected?.nickname || selected?.externalUid || selected?.id || '-' }}</b>
         </div>
         <label class="field-label required">相同消息等待时间（秒） <span>0-86400</span></label>
         <input
@@ -618,7 +618,7 @@
         <button class="modal-close" @click="closeModal"><Icon name="close" /></button>
         <h2>批量设置 / 统一应用</h2>
         <div class="edit-account-info">
-          <span>基准账号：</span><b>{{ selected?.nickname || selected?.displayName || selected?.externalUid || selected?.id || '-' }}</b>
+          <span>基准账号：</span><b>{{ selected?.nickname || selected?.externalUid || selected?.id || '-' }}</b>
         </div>
         <p class="modal-subtitle">以当前选中的账号为基准，将自动评价、消息等待等配置快速应用到当前列表中的账号。</p>
         <div class="modal-hint"><Icon name="help" /> 当前将对 {{ accounts.length }} 个账号执行批量操作；如只想作用于部分账号，请先通过搜索缩小列表范围。</div>
@@ -1426,7 +1426,7 @@ const rowClass = (row) => row.raw?.id === selectedId.value ? 'row-selected' : ''
 
 const rows = computed(() => {
   const kw = (debouncedKeyword.value || '').trim().toLowerCase()
-  const searchFields = ['nickname', 'displayName', 'accountNote', 'externalUid', 'unb', 'province', 'city', 'ipLocation', 'remark']
+  const searchFields = ['nickname', 'accountNote', 'externalUid', 'unb', 'province', 'city', 'ipLocation', 'remark']
   return accounts.value
   .filter(a => {
     // 状态筛选
@@ -1446,7 +1446,7 @@ const rows = computed(() => {
       raw: a,
       name: accountTitle(a),
       avatar: a.avatarUrl || a.avatar,
-      tag: a.accountNote && (a.nickname || a.displayName) ? (a.nickname || a.displayName) : '',
+      tag: a.accountNote && a.nickname ? a.nickname : '',
       uid: a.externalUid || a.unb || a.id,
       area: a.province && a.city ? `${a.province} ${a.city}` : (a.ipLocation || a.province || '-'),
       level: a.accountLevel || a.sellerLevel || a.fishShopLevel || '-',
@@ -1597,8 +1597,8 @@ async function refreshProfile(accountId) {
     const res = await refreshAccountProfile(accountId)
     const data = res.data?.account || res.data || res
     // 刷新成功后的提示
-    const displayName = data.displayName || data.nickname || ''
-    qrSuccessMsg.value = displayName ? `资料刷新成功: ${displayName}` : '资料刷新成功'
+    const nickname = data.nickname || ''
+    qrSuccessMsg.value = nickname ? `资料刷新成功: ${nickname}` : '资料刷新成功'
     setTimeout(() => { if (qrSuccessMsg.value && qrSuccessMsg.value.startsWith('资料刷新')) qrSuccessMsg.value = '' }, 4000)
     // 更新选中账号的详情
     if (selected.value && selected.value.id === accountId) {

@@ -90,7 +90,6 @@ def account_to_profile_dto(account):
         "status": account.status,
         "created_time": str(account.created_time) if account.created_time else None,
         "proxy_password": "***",
-        "display_name": account.nickname,
     }
 
 
@@ -374,12 +373,12 @@ async def restful_refresh_account_profile(
                 shop = module.get("shop", {}) if isinstance(module.get("shop"), dict) else {}
 
                 if base:
-                    display_name = _str_val(base, "displayName")
+                    profile_nickname = _str_val(base, "displayName")
                     ip_location = _str_val(base, "ipLocation")
                     avatar = _str_val(base, "avatar")
 
-                    if display_name:
-                        account.nickname = display_name
+                    if profile_nickname:
+                        account.nickname = profile_nickname
                         observed_profile_value = True
                     if ip_location:
                         parts = ip_location.split(" ", 1)

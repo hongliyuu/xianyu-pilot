@@ -222,7 +222,6 @@ def _goods_record(row: dict[str, Any]) -> dict[str, Any]:
         "id": row.get("account_id"),
         "avatarUrl": row.get("account_avatar_url") or "",
         "nickname": row.get("account_nickname") or "",
-        "displayName": row.get("account_nickname") or "",
         "accountNote": row.get("account_remark") or "",
         "externalUid": row.get("account_external_uid") or "",
     }
@@ -310,7 +309,6 @@ def _delivery_record(row: dict[str, Any]) -> dict[str, Any]:
         "goodsId": row.get("goods_id"),
         "goodsCoverPic": row.get("goods_cover_pic") or "",
         "sellerName": row.get("seller_name") or "",
-        "sellerDisplayName": row.get("seller_display_name") or "",
     }
 
 
@@ -3081,8 +3079,7 @@ async def get_delivery_records(
                     g.id AS goods_id,
                     COALESCE(g.cover_pic, g.image_url) AS goods_cover_pic,
                     COALESCE(o.pay_time, o.create_time, o.created_time) AS purchase_time,
-                    acc.nickname AS seller_name,
-                    acc.display_name AS seller_display_name
+                    acc.nickname AS seller_name
                     {join_sql}
                 WHERE {' AND '.join(where_sql)}
                 ORDER BY dr.created_time DESC, dr.id DESC
@@ -3132,8 +3129,7 @@ async def get_delivery_record_detail(
                     g.id AS goods_id,
                     COALESCE(g.cover_pic, g.image_url) AS goods_cover_pic,
                     COALESCE(o.pay_time, o.create_time, o.created_time) AS purchase_time,
-                    acc.nickname AS seller_name,
-                    acc.display_name AS seller_display_name
+                    acc.nickname AS seller_name
                 FROM delivery_record dr
                 LEFT JOIN xianyu_trade_order o
                   ON o.id = dr.order_id

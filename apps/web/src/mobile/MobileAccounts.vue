@@ -238,7 +238,7 @@ async function loadMore() {
 
 function accountName(acc) {
   if (!acc) return '未知账号'
-  return acc.name || acc.nickname || acc.displayName || acc.accountNote || `账号${acc.id || ''}`
+  return acc.name || acc.nickname || acc.accountNote || `账号${acc.id || ''}`
 }
 
 function accountLevel(acc) {

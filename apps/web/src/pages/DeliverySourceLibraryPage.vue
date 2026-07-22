@@ -429,7 +429,6 @@ function accountOf(row) {
     id: row?.accountId,
     avatarUrl: row?.accountAvatarUrl || '',
     nickname: row?.accountNickname || '',
-    displayName: row?.accountDisplayName || '',
     accountNote: row?.accountRemark || '',
     externalUid: row?.accountExternalUid || ''
   }

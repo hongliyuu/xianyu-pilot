@@ -2492,7 +2492,6 @@ async def compat_xianyu_accounts_list(
             "createdTime": _dt_text(a.created_time),
             "unb": a.external_uid,
             "accountNote": a.remark,
-            "displayName": a.nickname,
             "avatar": a.avatar_url,
             # 闲鱼主页资料字段（与 restful_refresh_account_profile 提取逻辑对应）
             "introduction": getattr(a, "introduction", None),
@@ -2747,7 +2746,6 @@ async def compat_xianyu_accounts_detail(
         "createdTime": _dt_text(account.created_time),
         "unb": account.external_uid,
         "accountNote": account.remark,
-        "displayName": account.nickname,
         "avatar": account.avatar_url,
         # 闲鱼主页资料字段（与 restful_refresh_account_profile 提取逻辑对应）
         "introduction": getattr(account, "introduction", None),
