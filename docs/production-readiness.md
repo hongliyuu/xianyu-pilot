@@ -148,8 +148,10 @@ These are baseline controls, not a certification or warranty.
    generator. Use a bcrypt cost of at least 12 for `ADMIN_PASSWORD_HASH`. Never
    store the plaintext administrator password in `.env`. Keep `secrets/` at
    mode `0700`; its files use mode `0644` because Compose bind-mounts them for
-   non-root containers. The protected parent directory prevents host users from
-   traversing to those files.
+   non-root containers. File-backed Compose secrets use these host permissions;
+   `uid`, `gid`, and `mode` mount attributes are not portable and are omitted.
+   The protected parent directory prevents host users from traversing to those
+   files.
 3. Use the dedicated non-root `MYSQL_APP_*` identity for API, Worker, and the
    one-shot migration service. It may manage only `MYSQL_DATABASE`; reserve the
    root credential for initialization and recovery. Do not reuse database,

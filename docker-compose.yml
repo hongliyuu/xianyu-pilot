@@ -176,34 +176,16 @@ services:
     secrets:
       - source: admin_password_hash
         target: admin_password_hash
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: mysql_app_password
         target: mysql_password
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: redis_password
         target: redis_password
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: jwt_secret
         target: jwt_secret
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: cookie_crypto_secret
         target: cookie_crypto_secret
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: internal_api_token
         target: internal_api_token
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
     networks:
       - data
     depends_on:
@@ -295,54 +277,24 @@ services:
     secrets:
       - source: admin_password_hash
         target: admin_password_hash
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: mysql_app_password
         target: mysql_password
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: redis_password
         target: redis_password
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: jwt_secret
         target: jwt_secret
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: cookie_crypto_secret
         target: cookie_crypto_secret
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: internal_api_token
         target: internal_api_token
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: commercial_backend_access_token
         target: commercial_backend_access_token
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: embedding_api_key
         target: embedding_api_key
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: ai_provider_api_key
         target: ai_provider_api_key
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
       - source: amap_api_key
         target: amap_api_key
-        uid: "10001"
-        gid: "10001"
-        mode: 0400
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=128m,mode=1777
     networks:
