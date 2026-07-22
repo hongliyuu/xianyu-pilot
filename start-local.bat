@@ -58,5 +58,5 @@ if not "%START_EXIT%"=="0" (
     exit /b %START_EXIT%
 )
 
-echo Local stack is ready. Use scripts\local-dev.ps1 status or stop to manage it.
+echo Local stack is ready. Use status-local.bat or stop-local.bat to manage it.
 exit /b 0

@@ -39,6 +39,8 @@
 - **账号鉴权工具增强**：accountAuth.js 新增 pickPreferredAccount（智能账号选择）、accountWsConnectionState（WS 三态）、resolveAccountAuthDisplayState（Cookie+WS 综合状态）、shouldAttemptAccountWebSocketStart
 
 ### 修复
+- **本地运行命令简化**：新增 `status-local.bat` 与 `stop-local.bat`，日常查看和停止本地栈不再需手写 PowerShell 执行参数。
+- **本地启动终端输入占用**：后台服务改为使用独立的空标准输入，避免 Vite 等子进程继承并读取启动终端的键盘输入。
 - **通知中心保活刷屏**：忽略 SSE 连接建立与心跳控制包，避免其被展示为实时业务通知。
 - **账号昵称字段收敛**：移除将 `nickname` 重复输出为 `displayName` 或 `display_name` 的兼容别名，账号名称只使用昵称字段。
 - **发货记录查询错误**：移除未定义的卖家展示名列，统一返回已有的卖家昵称，避免列表和详情查询返回 500。

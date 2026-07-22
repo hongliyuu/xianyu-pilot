@@ -103,17 +103,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\init-local-dev.ps1
 
 ```powershell
 .\start-local.bat
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\local-dev.ps1 status
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\local-dev.ps1 stop
+.\status-local.bat
+.\stop-local.bat
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-local.ps1
 ```
 
 说明：
 
 - `start-local.bat` 会先检查三个本地端口、运行版本化数据库迁移与 Crawler 构建，再通过 `scripts/local-dev.ps1` 启动 API、Crawler、Web 和 Scheduler Worker 并等待全部就绪；任一步失败都会回滚本次受管进程，批处理文件不会另起一份 Worker
-- `scripts/local-dev.ps1 status` 会检查 `12401 / 12402 / 12400`，并单独显示无端口 Scheduler 的 `owned` 与 `healthy` 状态
-- `scripts/local-dev.ps1 stop` 对有端口服务只停止 PID 文件对应的受管进程树；端口监听者必须是该进程树的成员。对 Scheduler 则只停止 `scheduler.pid` 指向且可执行文件与 `python -m app.worker` 命令完全匹配的进程，不会按端口或进程名批量终止
+- `status-local.bat` 会检查 `12401 / 12402 / 12400`，并单独显示无端口 Scheduler 的 `owned` 与 `healthy` 状态
+- `stop-local.bat` 对有端口服务只停止 PID 文件对应的受管进程树；端口监听者必须是该进程树的成员。对 Scheduler 则只停止 `scheduler.pid` 指向且可执行文件与 `python -m app.worker` 命令完全匹配的进程，不会按端口或进程名批量终止
 - Scheduler 的标准输出和错误日志分别写入 `output/local-dev/scheduler.out.log` 与 `output/local-dev/scheduler.err.log`，PID 写入 `output/local-dev/pids/scheduler.pid`
+- 受管的 API、Crawler、Web 和 Scheduler 使用空输入文件作为标准输入，不会继承启动终端的键盘输入；`start-local.bat` 返回后可在同一终端继续输入命令
 - 受管 Python 进程统一使用 UTF-8 写日志，避免 Windows 默认 GBK 导致跨编辑器、CI 或日志采集器查看时乱码
 - `scripts/verify-local.ps1` 会串行执行 Web 构建、API 编译检查和 Crawler 构建
 

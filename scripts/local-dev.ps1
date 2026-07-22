@@ -30,6 +30,7 @@ $SchedulerStderrFile = Join-Path $OutputDir 'scheduler.err.log'
 $SchedulerHeartbeatFile = Join-Path $OutputDir 'scheduler.heartbeat'
 $WebStdoutFile = Join-Path $OutputDir 'web.out.log'
 $WebStderrFile = Join-Path $OutputDir 'web.err.log'
+$DisabledStdinFile = Join-Path $OutputDir 'stdin.disabled'
 
 function Normalize-ProcessPathEnvironment() {
     # Some desktop launchers inject both Path and PATH. Windows treats them as
@@ -292,6 +293,7 @@ function Start-ServiceProcess(
         -FilePath $CommandPath `
         -ArgumentList $Arguments `
         -WorkingDirectory $WorkingDirectory `
+        -RedirectStandardInput $DisabledStdinFile `
         -RedirectStandardOutput $StdoutFile `
         -RedirectStandardError $StderrFile `
         -WindowStyle Hidden `
@@ -511,6 +513,7 @@ function Start-SchedulerProcess(
             -FilePath $PythonPath `
             -ArgumentList @('-m', 'app.worker') `
             -WorkingDirectory $WorkingDirectory `
+            -RedirectStandardInput $DisabledStdinFile `
             -RedirectStandardOutput $SchedulerStdoutFile `
             -RedirectStandardError $SchedulerStderrFile `
             -WindowStyle Hidden `
@@ -606,6 +609,9 @@ function Show-Status() {
 
 Ensure-Dir $OutputDir
 Ensure-Dir $PidDir
+if (-not (Test-Path -LiteralPath $DisabledStdinFile -PathType Leaf)) {
+    New-Item -ItemType File -Path $DisabledStdinFile | Out-Null
+}
 Normalize-ProcessPathEnvironment
 $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
