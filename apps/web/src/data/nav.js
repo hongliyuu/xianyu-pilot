@@ -26,6 +26,7 @@ export const navGroups = [
     title: '自动化',
     items: [
       { key: 'auto-delivery', label: '自动发货', icon: 'truck' },
+      { key: 'card-warehouse', label: '卡密仓库', icon: 'key' },
       { key: 'delivery-source-library', label: '货源库', icon: 'board', child: true },
       { key: 'delivery-statement', label: '发货声明', icon: 'board', child: true },
       { key: 'delivery-records', label: '发货记录', icon: 'record' },
@@ -69,6 +70,7 @@ export const pageTitles = {
   messages: ['在线消息', '集中处理买家咨询与消息会话'],
   'message-center': ['在线消息', '集中处理买家咨询与消息会话'],
   'auto-delivery': ['自动发货', '按商品配置自动发货规则、时机与发送方式'],
+  'card-warehouse': ['卡密仓库', '管理卡密分组、库存、导入与使用记录'],
   'delivery-source-library': ['货源库', '统一管理文本货源，支持 AI 推荐适配商品并批量配置'],
   'delivery-statement': ['发货声明', '管理发货声明文案与生效范围'],
   'delivery-records': ['发货记录', '追踪自动发货、异常与补发情况'],

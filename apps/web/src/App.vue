@@ -140,6 +140,7 @@ const pageMap = {
   messages: asyncPage(() => import('./pages/MessagesPage.vue')),
   'message-center': asyncPage(() => import('./pages/MessagesPage.vue')),
   'auto-delivery': asyncPage(() => import('./pages/AutoDeliveryPage.vue')),
+  'card-warehouse': asyncPage(() => import('./pages/CardWarehousePage.vue')),
   'delivery-source-library': asyncPage(() => import('./pages/DeliverySourceLibraryPage.vue')),
   'delivery-statement': asyncPage(() => import('./pages/DeliveryStatementPage.vue')),
   'delivery-records': asyncPage(() => import('./pages/DeliveryRecordsPage.vue')),
