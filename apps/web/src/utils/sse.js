@@ -7,6 +7,14 @@ let keepAliveTimer = null
 let lastMessageTime = 0
 let connectionGeneration = 0
 
+const CONTROL_EVENT_TYPES = new Set(['connected', 'heartbeat'])
+
+function isSseControlEvent(payload) {
+  if (!payload || typeof payload !== 'object') return false
+  const type = String(payload.type || payload.eventType || '').trim().toLowerCase()
+  return CONTROL_EVENT_TYPES.has(type)
+}
+
 const apiBaseUrl = import.meta.env.VITE_API_BASE || '/api'
 const MAX_RECONNECT_DELAY = 10000      // 最大重连间隔 10s
 const KEEPALIVE_INTERVAL = 25000       // 每 25s 检查一次连接活性
@@ -161,7 +169,8 @@ export async function connectSse(onEvent, onStatus) {
       lastMessageTime = Date.now()
       if (!event.data) return
       try {
-        onEvent?.(JSON.parse(event.data))
+        const payload = JSON.parse(event.data)
+        if (!isSseControlEvent(payload)) onEvent?.(payload)
       } catch {
         onEvent?.(event.data)
       }

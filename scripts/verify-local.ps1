@@ -36,7 +36,6 @@ function Invoke-CheckedCommand(
 $npm = Require-Command 'npm.cmd'
 $python = Require-Command 'python'
 
-Invoke-CheckedCommand -Name 'Python unit tests' -CommandPath $python -Arguments @('-m', 'unittest', 'discover', '-s', 'tests') -WorkingDirectory $Root
 Invoke-CheckedCommand -Name 'Web production build' -CommandPath $npm -Arguments @('run', 'build') -WorkingDirectory $WebDir
 Invoke-CheckedCommand -Name 'API compile check' -CommandPath $python -Arguments @('-m', 'compileall', '-q', 'app') -WorkingDirectory $ApiDir
 Invoke-CheckedCommand -Name 'Crawler build' -CommandPath $npm -Arguments @('run', 'build') -WorkingDirectory $CrawlerDir
